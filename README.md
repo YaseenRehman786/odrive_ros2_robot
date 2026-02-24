@@ -1,6 +1,6 @@
 This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Bothweel motors, Intel Realsense D435 camera, and RPLidar.
 
-```
+```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 source ~/ws_odrive/install/setup.bash
 
