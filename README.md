@@ -2,7 +2,7 @@ This repository will be for my autonomous robot project where I will be using a 
 
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
-source ~/ws_odrive/install/setup.bash
+source ~/ws_odrive_robot/install/setup.bash
 
 sudo modprobe can
 sudo modprobe can_raw
