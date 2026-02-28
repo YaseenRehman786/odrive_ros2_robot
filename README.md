@@ -14,3 +14,8 @@ sudo ip link set can0 up
 
 ip -details link show can0
 ```
+
+SSH into my Jetson
+```bash
+ssh yaseenjetson@192.168.0.133
+```
