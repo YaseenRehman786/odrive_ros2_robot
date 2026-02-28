@@ -1,0 +1,104 @@
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, UnsetEnvironmentVariable
+from launch.conditions import IfCondition, UnlessCondition
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+
+def generate_launch_description():
+    pkg = get_package_share_directory('view_robot_pkg')
+
+    use_gui = DeclareLaunchArgument(
+        'use_gui',
+        default_value='true',
+        description='Use joint_state_publisher_gui to move joints'
+    )
+
+    clear_gtk_path = UnsetEnvironmentVariable('GTK_PATH')
+    clear_gtk_exe_prefix = UnsetEnvironmentVariable('GTK_EXE_PREFIX')
+    clear_gio_module_dir = UnsetEnvironmentVariable('GIO_MODULE_DIR')
+    clear_gsettings_schema_dir = UnsetEnvironmentVariable('GSETTINGS_SCHEMA_DIR')
+    clear_locpath = UnsetEnvironmentVariable('LOCPATH')
+    clear_gtk_im_module_file = UnsetEnvironmentVariable('GTK_IM_MODULE_FILE')
+    clear_ros_discovery_server = UnsetEnvironmentVariable('ROS_DISCOVERY_SERVER')
+    clear_ros_localhost_only = UnsetEnvironmentVariable('ROS_LOCALHOST_ONLY')
+    clear_cyclonedds_uri = UnsetEnvironmentVariable('CYCLONEDDS_URI')
+    clear_fastdds_profiles = UnsetEnvironmentVariable('FASTRTPS_DEFAULT_PROFILES_FILE')
+    clear_rmw_implementation = UnsetEnvironmentVariable('RMW_IMPLEMENTATION')
+
+    urdf_file = PathJoinSubstitution([pkg, 'urdf', 'robot_description.urdf']) 
+
+    robot_description = Command(['cat ', urdf_file])
+
+    # Publishes /joint_states from sliders
+    jsp_gui = Node(
+        condition=IfCondition(LaunchConfiguration('use_gui')),
+        package='joint_state_publisher_gui',
+        executable='joint_state_publisher_gui',
+        name='joint_state_publisher_gui',
+        arguments=[],
+        remappings=[('/joint_states', '/view_robot_pkg/joint_states')],
+        parameters=[{'rate': 30.0}, {'robot_description': robot_description}],
+        emulate_tty=True
+    )
+
+    jsp = Node(
+        condition=UnlessCondition(LaunchConfiguration('use_gui')),
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        remappings=[('/joint_states', '/view_robot_pkg/joint_states')],
+        parameters=[{'rate': 30.0}, {'robot_description': robot_description}],
+        output='screen'
+    )
+
+    # Publishes TF from the URDF
+    rsp = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        remappings=[('/joint_states', '/view_robot_pkg/joint_states')],
+        parameters=[{'robot_description': robot_description}],
+        output='screen'
+    )
+
+    world_to_base = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='world_to_base_tf',
+        arguments=[
+            '--x', '0', '--y', '0', '--z', '0',
+            '--roll', '0', '--pitch', '0', '--yaw', '0',
+            '--frame-id', 'world', '--child-frame-id', 'base_footprint'
+        ],
+        output='screen'
+    )
+
+    # Opening RViz and give a default view
+    rviz = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', PathJoinSubstitution([pkg, 'rviz', 'default_view.rviz'])],
+        output='screen'
+    )
+
+    return LaunchDescription([
+        use_gui,
+        clear_gtk_path,
+        clear_gtk_exe_prefix,
+        clear_gio_module_dir,
+        clear_gsettings_schema_dir,
+        clear_locpath,
+        clear_gtk_im_module_file,
+        clear_ros_discovery_server,
+        clear_ros_localhost_only,
+        clear_cyclonedds_uri,
+        clear_fastdds_profiles,
+        clear_rmw_implementation,
+        jsp_gui,
+        jsp,
+        rsp,
+        world_to_base,
+        rviz
+    ])
