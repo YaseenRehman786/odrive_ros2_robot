@@ -1,5 +1,6 @@
 This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Bothweel motors, Intel Realsense D435 camera, and RPLidar.
 
+------------------------------------------------------------------
 **Updating Github Repo**  
 I have two git worlds:  
 1. odrive_ros2_robot (my main repo) -> commit changes in workspace repo
@@ -28,11 +29,7 @@ git commit -m "Bump ros_odrive submodule"
 git push origin main
 ```
 
-
-
-
 ------------------------------------------------------------------
-
 **Sourcing**
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
