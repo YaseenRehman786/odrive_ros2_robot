@@ -12,7 +12,7 @@ git push origin main
 
 2. ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace
 
-Step A - Commit inside the submodule
+  Step A - Commit inside the submodule
 ```bash
 cd ~/ws_odrive_robot/src/ros_odrive
 git add .
@@ -20,7 +20,7 @@ git commit -m "My ros_odrive changes"
 git push origin main
 ```
 
-Step B - Tell your workspace repo the submodule moved to a new commit:
+  Step B - Tell your workspace repo the submodule moved to a new commit:
 ```bash
 cd ~/ws_odrive_robot
 git add src/ros_odrive
