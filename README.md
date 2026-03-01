@@ -1,5 +1,12 @@
 This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Bothweel motors, Intel Realsense D435 camera, and RPLidar.
 
+**Sourcing**
+```bash
+source /opt/ros/$ROS_DISTRO/setup.bash
+source ~/ws_odrive_robot/install/setup.bash
+```
+
+**CAN Bringup**
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 source ~/ws_odrive_robot/install/setup.bash
@@ -15,7 +22,7 @@ sudo ip link set can0 up
 ip -details link show can0
 ```
 
-SSH into my Jetson
+**SSH into my Jetson**
 ```bash
 ssh yaseenjetson@192.168.0.133
 ```
