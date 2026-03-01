@@ -27,7 +27,7 @@ ip -details link show can0
 ssh yaseenjetson@192.168.0.133
 ```
 
-**Controlling Odrive and Motors**
+**Controlling Odrive and Motors**  
 **_APPROACH A -> odrive_node_**
 1. Initialize CAN node
 ```bash
