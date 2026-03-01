@@ -64,6 +64,25 @@ git commit -m "Update workspace + bump submodule"
 git push origin main
 ```
 
+5. I make changes on my actual github repo, but also make changes to files on my PC, both repo and github are ahead of eachother
+
+  Step A - Commit my local changes FIRST
+```bash
+cd ~/ws_odrive_robot
+git add .
+git commit -m "My local changes"
+```
+
+  Step B - Pull my report changes safely (temporarily removes my local commit, download github changes, re-applies my commits ontop)
+```bash
+git pull --rebase origin main
+```
+
+  Step C - 
+```bash
+git push origin main
+```
+
 
 ------------------------------------------------------------------
 **Sourcing**
