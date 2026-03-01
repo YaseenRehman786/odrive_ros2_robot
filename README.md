@@ -11,7 +11,7 @@ git commit -m "Update view_robot_pkg"
 git push origin main
 ```
 
-2. ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace
+2. ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace  
 
   Step A - Commit inside the submodule
 ```bash
@@ -30,6 +30,7 @@ git push origin main
 ```
 
 3. Official odriverobotics update their repo and I want the updates
+
   Step A - go inside the submodule (pull official changes, keeps my edits, updates my fork)
 ```bash
 cd ~/ws_odrive_robot/src/ros_odrive
@@ -46,6 +47,7 @@ git push origin main
 ```
 
 4. You change BOTH packages inside your workspace AND ros_odrive inside your fork
+
   Step A - Commit ros_odrive first:
 ```bash
 cd ~/ws_odrive_robot/src/ros_odrive
