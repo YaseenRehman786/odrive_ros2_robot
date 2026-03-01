@@ -46,7 +46,7 @@ git commit -m "Update ros_odrive from upstream"
 git push origin main
 ```
 
-4. You change BOTH packages inside your workspace AND ros_odrive inside your fork
+4. I change BOTH packages inside my workspace AND ros_odrive inside my fork
 
   Step A - Commit ros_odrive first:
 ```bash
