@@ -3,7 +3,7 @@ This repository will be for my autonomous robot project where I will be using a 
 ------------------------------------------------------------------
 **Updating Github Repo**  
 I have two git worlds:  
-**1. odrive_ros2_robot (my main repo) -> commit changes in workspace repo**
+**1. I make changes to odrive_ros2_robot (my main repo) -> commit changes in workspace repo**
 ```bash
 cd ~/ws_odrive_robot
 git add .
@@ -11,7 +11,7 @@ git commit -m "Update view_robot_pkg"
 git push origin main
 ```
 
-**2. ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace**
+**2. I make changes to ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace**
 
   Step A - Commit inside the submodule
 ```bash
@@ -46,7 +46,7 @@ git commit -m "Update ros_odrive from upstream"
 git push origin main
 ```
 
-**4. I change BOTH packages inside my workspace AND ros_odrive inside my fork**
+**4. I change BOTH packages inside my main workspace AND ros_odrive inside my fork**
 
   Step A - Commit ros_odrive first:
 ```bash
