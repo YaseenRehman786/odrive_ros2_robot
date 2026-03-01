@@ -29,6 +29,40 @@ git commit -m "Bump ros_odrive submodule"
 git push origin main
 ```
 
+3. Official odriverobotics update their repo and I want the updates
+  Step A - go inside the submodule (pull official changes, keeps my edits, updates my fork)
+```bash
+cd ~/ws_odrive_robot/src/ros_odrive
+git fetch upstream
+git pull --rebase upstream main
+git push origin main
+```
+  Step B - update workspace pointer
+```bash
+cd ~/ws_odrive_robot
+git add src/ros_odrive
+git commit -m "Update ros_odrive from upstream"
+git push origin main
+```
+
+4. You change BOTH packages inside your workspace AND ros_odrive inside your fork
+  Step A - Commit ros_odrive first:
+```bash
+cd ~/ws_odrive_robot/src/ros_odrive
+git add .
+git commit -m "Update ros_odrive"
+git push origin main
+```
+
+  Step B - Commit workspace changes:
+```bash
+cd ~/ws_odrive_robot
+git add .
+git commit -m "Update workspace + bump submodule"
+git push origin main
+```
+
+
 ------------------------------------------------------------------
 **Sourcing**
 ```bash
