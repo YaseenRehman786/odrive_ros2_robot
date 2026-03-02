@@ -82,6 +82,21 @@ git pull --rebase origin main
 ```bash
 git push origin main
 ```
+**6. To clone and pull both the workspace repo (odrive_ros2_robot) and submodule (src/ros_odrive) on another device/computer**
+```bash
+git clone --recurse-submodules https://github.com/YaseenRehman786/odrive_ros2_robot.git
+cd odrive_ros2_robot
+```
+If you forgot --recursive-submodules
+```bash
+git submodule update --init --recursive
+```
+
+Pull updates later on that machine
+```bash
+git pull
+git submodule update --init --recursive
+```
 
 
 ------------------------------------------------------------------
