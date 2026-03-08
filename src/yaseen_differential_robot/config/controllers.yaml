@@ -25,12 +25,12 @@ yaseen_diffbot_controller:
     # 
     publish_rate: 50.0 #Hz
     odom_frame_id: odom # the name of the odometry frame as defined in the URDF
-    base_frame_id: base_link # the name of the base frame as defined in the URDF
+    base_frame_id: base_footprint # the name of the base frame as defined in the URDF
 
     #pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001] # the covariance of the pose estimation
     #twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001] # the covariance of the twist estimation
 
-    open_loop: true # if true, the controller will use the commanded velocities to estimate the odometry. If false, the controller will use the wheel encoders to estimate the odometry. If you are using a simulation, you can set this to true. If you are using a real robot, you should set this to false and make sure that your robot has wheel encoders that are publishing the joint states.
+    open_loop: false # for real hardware, use wheel feedback so odometry/RViz reflect actual robot motion
     enable_odom_tf: true # if true, the controller will publish the odometry transform between the odom frame and the base frame. If false, the controller will not publish the odometry transform and you will need to use a separate node to publish the transform.
     use_stamped_vel: false # if true, the controller will use the timestamp of the cmd_vel messages to estimate the odometry. If false, the controller will use the time since the last update to estimate the odometry. If you are using a simulation, you can set this to true. If you are using a real robot, you should set this to false and make sure that your robot has a reliable clock.
 
