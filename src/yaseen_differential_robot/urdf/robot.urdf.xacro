@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot name="yaseen_differential_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  
+  <xacro:arg name="use_mock_hardware" default="true" />
+
+  <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_description.xacro"/>
+  <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_ros2_control.xacro"/>
+  
+  
+  <xacro:yaseen_description/>
+  <xacro:yaseen_ros2_control name="YaseenDiffBot" use_mock_hardware="$(arg use_mock_hardware)"/>
+
+</robot>

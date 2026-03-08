@@ -1,0 +1,71 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 10 #Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster # this controller type is used to publish the state of the joints to ROS2 topics
+
+    yaseen_diffbot_controller:
+      type: diff_drive_controller/DiffDriveController # this controller type is used to control the robot using a differential drive controller
+
+yaseen_diffbot_controller:
+  ros__parameters:
+    left_wheel_names: ['wheel_left_joint'] # the name of the left wheel joint as defined in the URDF
+    right_wheel_names: ['wheel_right_joint'] # the name of the right wheel joint as defined in the URDF
+    
+    # the wheel separation and radius are defined in meters. The wheel separation is the distance between the centers of the left and right wheels. The wheel radius is the radius of the wheels.
+    wheel_separation: 0.5064
+    wheel_radius: 0.0855
+
+    # these multipliers can be used to adjust the wheel separation and radius if the robot is not moving as expected. For example, if the robot is not turning correctly, you can adjust the wheel separation multiplier. If the robot is not moving straight, you can adjust the wheel radius multipliers.
+    wheel_separation_multiplier: 1.0
+    left_wheel_radius_multiplier: -1.0
+    right_wheel_radius_multiplier: 1.0
+
+    # 
+    publish_rate: 50.0 #Hz
+    odom_frame_id: odom # the name of the odometry frame as defined in the URDF
+    base_frame_id: base_link # the name of the base frame as defined in the URDF
+
+    #pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001] # the covariance of the pose estimation
+    #twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001] # the covariance of the twist estimation
+
+    open_loop: true # if true, the controller will use the commanded velocities to estimate the odometry. If false, the controller will use the wheel encoders to estimate the odometry. If you are using a simulation, you can set this to true. If you are using a real robot, you should set this to false and make sure that your robot has wheel encoders that are publishing the joint states.
+    enable_odom_tf: true # if true, the controller will publish the odometry transform between the odom frame and the base frame. If false, the controller will not publish the odometry transform and you will need to use a separate node to publish the transform.
+    use_stamped_vel: false # if true, the controller will use the timestamp of the cmd_vel messages to estimate the odometry. If false, the controller will use the time since the last update to estimate the odometry. If you are using a simulation, you can set this to true. If you are using a real robot, you should set this to false and make sure that your robot has a reliable clock.
+
+
+    cmd_vel_timeout: 0.5 # seconds, if no cmd_vel is received within this time, the robot will stop
+
+
+    # linear.x.has_velocity_limits: true
+    # linear.x.max_velocity: 1.0
+    # linear.x.min_velocity: -1.0
+    # linear.x.has_acceleration_limits: true
+    # linear.x.max_acceleration: 1.0
+
+    # angular.z.has_velocity_limits: true
+    # angular.z.max_velocity: 1.0
+    # angular.z.min_velocity: -1.0
+    # angular.z.has_acceleration_limits: true
+    # angular.z.max_acceleration: 1.0
+
+
+    linear.x.has_velocity_limits: true
+    linear.x.has_acceleration_limits: true
+    linear.x.has_jerk_limits: false
+    linear.x.max_velocity: 1.0
+    linear.x.min_velocity: -1.0
+    linear.x.max_acceleration: 1.0
+    linear.x.max_jerk: 0.0
+    linear.x.min_jerk: 0.0
+
+    angular.z.has_velocity_limits: true
+    angular.z.has_acceleration_limits: true
+    angular.z.has_jerk_limits: false
+    angular.z.max_velocity: 1.0
+    angular.z.min_velocity: -1.0
+    angular.z.max_acceleration: 1.0
+    angular.z.min_acceleration: -1.0
+    angular.z.max_jerk: 0.0
+    angular.z.min_jerk: 0.0
