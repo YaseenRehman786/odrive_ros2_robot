@@ -69,7 +69,7 @@ def generate_launch_description():
             "-name", "yaseen_bot",
             "-topic", "robot_description",
             "-allow_renaming", "true",
-            "-z", "0.3",
+            "-z", "1.5",
         ],
         output="screen",
     )
