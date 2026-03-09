@@ -61,8 +61,26 @@ ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{ax
   ```  
   b. 
   ```bash
-  run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel
+  ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel
   ```
+
+1. Running in RVIZ2 or on real robot  
+   a.
+   ```bash
+   ros2 launch yaseen_differential_robot control.launch.py
+
+b.
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+Running in Gazebo
+a.
+
+ros2 launch yaseen_differential_robot gz_sim.launch.py
+
+b.
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -r /cmd_v
 
 ------------------------------------------------------------------
 **Updating Github Repo**  
