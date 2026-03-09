@@ -1,0 +1,24 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 10
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    yaseen_diffbot_controller:
+      type: diff_drive_controller/DiffDriveController
+
+yaseen_diffbot_controller:
+  ros__parameters:
+    use_sim_time: true
+    left_wheel_names: ["wheel_left_joint"]
+    right_wheel_names: ["wheel_right_joint"]
+    wheel_separation: 0.5064
+    wheel_radius: 0.0855
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    open_loop: false
+    enable_odom_tf: true
+    cmd_vel_timeout: 0.5
