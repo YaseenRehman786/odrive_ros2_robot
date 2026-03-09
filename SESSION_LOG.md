@@ -1,8 +1,8 @@
 # ROS2 Differential Drive Robot Development Session Log
-**Date**: March 8, 2026  
+**Date**: March 8-9, 2026  
 **Project**: yaseen_differential_robot - ODrive S1 Differential Drive Robot  
 **ROS2 Version**: Humble  
-**Status**: ✅ Phase 1 & Phase 2 Complete - Mock Hardware Control Working
+**Status**: ✅ Phase 1, 2 & 3 Complete - Gazebo Simulation Working
 
 ---
 
@@ -362,6 +362,319 @@ wheel_joint_names:
 
 ---
 
+## Phase 3: Gazebo Simulation ✅
+
+### What We Did:
+
+Successfully integrated Gazebo Fortress (gz sim) simulation with complete physics tuning and controller configuration.
+
+### Files Created/Modified:
+
+1. **Created `robot_gazebo.xacro`** - Gazebo-specific physics properties:
+```xml
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="gazebo_config">
+    <!-- Drive wheels: high friction for traction -->
+    <gazebo reference="wheel_left_link">
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>10000.0</kp>
+      <kd>1.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>1.0</maxVel>
+    </gazebo>
+
+    <gazebo reference="wheel_right_link">
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>10000.0</kp>
+      <kd>1.0</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>1.0</maxVel>
+    </gazebo>
+
+    <!-- Casters: frictionless for free rotation -->
+    <gazebo reference="caster_left_wheel_link">
+      <mu1>0.0</mu1>
+      <mu2>0.0</mu2>
+    </gazebo>
+
+    <gazebo reference="caster_wheel_right_link">
+      <mu1>0.0</mu1>
+      <mu2>0.0</mu2>
+    </gazebo>
+
+    <!-- gz_ros2_control plugin -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find yaseen_differential_robot)/config/gz_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>
+```
+
+2. **Created `gz_controllers.yaml`** - Simulation-specific controller parameters:
+```yaml
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    yaseen_diffbot_controller:
+      type: diff_drive_controller/DiffDriveController
+
+yaseen_diffbot_controller:
+  ros__parameters:
+    left_wheel_names: ["wheel_left_joint"]
+    right_wheel_names: ["wheel_right_joint"]
+    
+    wheel_separation: 0.5064
+    wheel_radius: 0.0855
+    
+    # Critical for correct Gazebo kinematics
+    wheel_separation_multiplier: 1.0
+    left_wheel_radius_multiplier: -1.0
+    right_wheel_radius_multiplier: 1.0
+    
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    pose_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
+    twist_covariance_diagonal: [0.001, 0.0, 0.0, 0.0, 0.0, 0.01]
+    
+    open_loop: false
+    enable_odom_tf: true
+    cmd_vel_timeout: 0.5
+    
+    linear.x.has_velocity_limits: true
+    linear.x.max_velocity: 1.0
+    linear.x.min_velocity: -1.0
+    
+    angular.z.has_velocity_limits: true
+    angular.z.max_velocity: 2.0
+    angular.z.min_velocity: -2.0
+```
+
+3. **Created `gz_sim.launch.py`** - Gazebo launch file:
+```python
+import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler
+from launch.event_handlers import OnProcessExit
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration, Command, FindExecutable, PathJoinSubstitution
+from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
+def generate_launch_description():
+    pkg_share = get_package_share_directory('yaseen_differential_robot')
+    
+    world_file = os.path.join(pkg_share, 'worlds', 'empty.sdf')
+    
+    robot_description_content = Command([
+        PathJoinSubstitution([FindExecutable(name="xacro")]),
+        " ",
+        PathJoinSubstitution([FindPackageShare("yaseen_differential_robot"), "urdf", "robot_gazebo.urdf.xacro"])
+    ])
+    
+    robot_description = {"robot_description": robot_description_content}
+    
+    robot_controllers = PathJoinSubstitution([
+        FindPackageShare("yaseen_differential_robot"), "config", "gz_controllers.yaml"
+    ])
+    
+    robot_state_pub_node = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        parameters=[robot_description],
+        output="both",
+    )
+    
+    gazebo = ExecuteProcess(
+        cmd=['gz', 'sim', '-r', world_file],
+        output='screen'
+    )
+    
+    spawn_entity = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-topic', 'robot_description',
+            '-name', 'yaseen_robot',
+            '-z', '1.5'
+        ],
+        output='screen'
+    )
+    
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster"],
+    )
+    
+    robot_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["yaseen_diffbot_controller"],
+    )
+    
+    delay_robot_controller = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[robot_controller_spawner],
+        )
+    )
+    
+    return LaunchDescription([
+        gazebo,
+        robot_state_pub_node,
+        spawn_entity,
+        joint_state_broadcaster_spawner,
+        delay_robot_controller,
+    ])
+```
+
+4. **Created `robot_gazebo.urdf.xacro`** - Main file for Gazebo:
+```xml
+<?xml version="1.0"?>
+<robot name="yaseen_differential_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_description.xacro"/>
+  <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_gazebo.xacro"/>
+  
+  <xacro:yaseen_description/>
+  <xacro:gazebo_config/>
+
+</robot>
+```
+
+5. **Modified `robot_description.xacro`** - Critical geometry fixes:
+   - **Base height adjustment**: Changed `base_footprint_joint` z from 0.56206 to **0.58365** to account for wheel radius (prevents robot sinking into ground)
+   - **Wheel collision geometry**: Replaced complex mesh collisions with **cylinder primitives** (radius=0.0855, length=0.033) for stable physics contact
+   - **Caster collision geometry**: Replaced mesh with **sphere primitives** (radius=0.0372) to eliminate ground penetration
+   - **Visual geometry**: Kept original STL meshes for accurate appearance
+   - Collision rpy set to "0 0 0" for proper orientation
+
+### Major Issues Resolved:
+
+#### Issue 1: Wheel Slipping in Gazebo
+**Symptoms**: Robot wouldn't move despite cmd_vel commands, wheels spinning in place  
+**Root Cause**: Mesh-based wheel collisions causing unstable contact points  
+**Fix Applied**:
+- Replaced wheel mesh collisions with cylinder primitives
+- Tuned friction coefficients (mu1=1.0, mu2=1.0)
+- Set contact parameters (kp=10000.0, kd=1.0)
+- Result: ✅ Stable wheel-ground contact achieved
+
+#### Issue 2: Robot Spawning Underground
+**Symptoms**: Base link, wheels, and casters partially/fully below ground plane  
+**Root Cause**: base_footprint_joint height didn't account for wheel radius offset  
+**Fix Applied**:
+- Adjusted base_footprint_joint z: 0.49815 → **0.58365**
+- This value = original_height + wheel_radius_compensation
+- Result: ✅ Robot sits at correct ground clearance
+
+#### Issue 3: Caster Ground Penetration
+**Symptoms**: Caster wheels sinking into ground or floating inside robot frame  
+**Root Cause**: Complex mesh geometry with coordinate frame mismatches  
+**Debugging Process** (15+ iterations):
+- Initially tried adjusting visual offsets in rotated frames (failed)
+- Key insight: Separate visual (mesh) from collision (primitive) geometry
+- Iteratively tuned sphere radius: 0.03 → 0.032 → 0.034 → 0.035 → 0.036 → 0.0365 → **0.0372**
+**Final Fix**:
+- Caster collision: sphere radius=0.0372 at xyz="0 0 0"
+- Caster visual: kept original STL mesh at xyz="0 0 0"
+- Caster joints: maintained at xyz="0.26586 ±0.085525 -0.53206"
+- Result: ✅ Casters positioned correctly under frame, no ground penetration
+
+#### Issue 4: Inverted Teleop Controls
+**Symptoms**: i/comma moved robot left/right instead of forward/back, j/l moved forward/back instead of turning  
+**Root Cause**: Wheel radius multipliers not set for Gazebo differential drive kinematics  
+**Fix Applied**:
+- Added to `gz_controllers.yaml`:
+  ```yaml
+  left_wheel_radius_multiplier: -1.0
+  right_wheel_radius_multiplier: 1.0
+  ```
+- Note: Real hardware uses different multipliers in `controllers.yaml`
+- Result: ✅ All teleop directions correct (i=forward, ,=back, j=left turn, l=right turn)
+
+### Key Parameters for Future Reference:
+
+```yaml
+# Critical URDF geometry values
+base_footprint_joint z: 0.58365
+wheel_collision: cylinder radius=0.0855 length=0.033
+caster_collision: sphere radius=0.0372
+
+# Friction coefficients
+drive_wheels: mu1=1.0, mu2=1.0, kp=10000.0, kd=1.0
+casters: mu1=0.0, mu2=0.0 (frictionless)
+
+# Wheel multipliers (Gazebo-specific)
+left_wheel_radius_multiplier: -1.0
+right_wheel_radius_multiplier: 1.0
+wheel_separation_multiplier: 1.0
+
+# These differ from real hardware controllers.yaml!
+```
+
+### Launch Commands:
+
+**Start Gazebo Simulation**:
+```bash
+ros2 launch yaseen_differential_robot gz_sim.launch.py
+```
+
+**Keyboard Teleoperation**:
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+```
+
+### Verification Commands:
+```bash
+# Check Gazebo topics
+gz topic -l
+
+# Check ROS topics
+ros2 topic list
+
+# Monitor joint states
+ros2 topic echo /joint_states
+
+# Check controller status
+ros2 control list_controllers
+
+# Test motion
+ros2 topic pub /yaseen_diffbot_controller/cmd_vel_unstamped geometry_msgs/msg/Twist "{linear: {x: 0.5}}" --rate 10
+```
+
+### Git Repository:
+
+All Gazebo simulation work committed to branch **gazebo_gz_sim**:
+```bash
+git branch: gazebo_gz_sim
+git remote: https://github.com/YaseenRehman786/odrive_ros2_robot.git
+Latest commits:
+- 4a69912: Add backup of robot_description.xacro
+- 69881bb: Tune Gazebo caster contact and diff-drive control mapping
+```
+
+**Files tracked**:
+- `config/gz_controllers.yaml`
+- `launch/gz_sim.launch.py`
+- `urdf/robot_description.xacro`
+- `urdf/robot_gazebo.xacro`
+- `urdf/robot_gazebo.urdf.xacro`
+- `urdf/robot_description.xacro.backup`
+
+---
+
 ## Next Steps (In Priority Order)
 
 ### ✅ Completed - Teleoperation Testing:
@@ -376,16 +689,12 @@ wheel_joint_names:
    - TF transforms update in real-time during motion
    - Odometry trail visible
 
-### Phase 3: Gazebo Simulation
-1. Create `robot_gazebo.xacro` with:
-   - Gazebo physics properties
-   - Differential drive plugin
-   - Sensor plugins (lidar, camera)
-
-2. Create `gazebo.launch.py`:
-   - Spawn robot in Gazebo
-   - Load same controllers as real hardware
-   - Test cmd_vel → wheel motion in 3D
+3. **Gazebo Simulation** ✅
+   - Robot spawns correctly at ground level
+   - Physics contact stable (no slipping, sinking, or penetration)
+   - Differential drive controller functional
+   - All teleop directions correct
+   - Code committed to gazebo_gz_sim branch
 
 ### Phase 4: Real Hardware Integration
 1. **Setup CAN interface** on Jetson:
@@ -470,11 +779,14 @@ pkill -9 ros
 - Mock/real hardware runtime switching
 - **Keyboard teleoperation working in RViz**
 - **Robot motion validated (wheels spin, odom updates, TF broadcasts)**
+- **Gazebo Fortress simulation fully functional**
+- **Physics tuned (friction, contact, geometry)**
+- **Teleop controls correct in simulation**
 
 🔄 **Next**:
-- PS4 controller teleoperation (optional)
-- Gazebo 3D simulation
+- Sensor plugins in Gazebo (lidar, camera)
 - Real ODrive hardware testing
+- Nav2 integration
 
 ---
 
@@ -482,8 +794,9 @@ pkill -9 ros
 
 If continuing in a new chat, provide this entire file and mention:
 - "Continuing from SESSION_LOG.md in yaseen_differential_robot project"
-- Current phase completed: Phase 1 & 2
-- Ready for: Teleoperation testing or Gazebo integration
+- Current phase completed: Phase 1, 2 & 3
+- Ready for: Sensor integration in Gazebo or Real hardware testing
 - All files are in: `/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/`
+- Gazebo branch: `gazebo_gz_sim` at https://github.com/YaseenRehman786/odrive_ros2_robot.git
 
-**Last verified working**: March 8, 2026 17:20 UTC
+**Last verified working**: March 9, 2026
