@@ -1,12 +1,19 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    # Get the package directory
+    pkg_name = 'yaseen_differential_robot' # package name
+    pkg_share = get_package_share_directory(pkg_name) # get the package share directory
+
     # Declare launch argument for hardware type
     use_mock_hardware_arg = DeclareLaunchArgument(
         'use_mock_hardware',
@@ -77,6 +84,15 @@ def generate_launch_description():
         )
     )
 
+    # RViz2 node
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', os.path.join(pkg_share, 'rviz', 'view_robot_odom.rviz')]
+    )
+
     return LaunchDescription(
         [
             use_mock_hardware_arg,
@@ -84,5 +100,6 @@ def generate_launch_description():
             robot_state_pub_node,
             joint_state_broadcaster_spawner,
             delay_robot_controller,
+            rviz_node,
         ]
     )

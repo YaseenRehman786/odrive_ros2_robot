@@ -47,7 +47,7 @@
     <joint name="base_footprint_joint" type="fixed">
       <origin
         xyz="0 0 0.58365"
-        rpy="0 0 3.141592653589793" />
+        rpy="0 0 0.0" /> <!-- base_link rpy originally 3.141592653589793, but changed to 0 for testing -->
       <parent
         link="base_footprint" />
       <child
