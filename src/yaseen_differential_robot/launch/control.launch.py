@@ -1,5 +1,3 @@
-import os
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
@@ -7,18 +5,26 @@ from launch.substitutions import Command, FindExecutable, LaunchConfiguration, P
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
+from launch.conditions import IfCondition
+
 
 
 def generate_launch_description():
     # Get the package directory
-    pkg_name = 'yaseen_differential_robot' # package name
-    pkg_share = get_package_share_directory(pkg_name) # get the package share directory
+    #pkg_name = 'yaseen_differential_robot' # package name
+    #pkg_share = get_package_share_directory(pkg_name) # get the package share directory
 
     # Declare launch argument for hardware type
     use_mock_hardware_arg = DeclareLaunchArgument(
         'use_mock_hardware',
         default_value='true',
         description='Use mock hardware (true) or real ODrive hardware (false)'
+    )
+
+    use_rviz_arg = DeclareLaunchArgument(
+        'use_rviz',
+        default_value='true',
+        description='Whether to launch RViz2 for visualization'
     )
     
     # Process the URDF file with xacro
@@ -84,18 +90,25 @@ def generate_launch_description():
         )
     )
 
-    # RViz2 node
+
     rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', os.path.join(pkg_share, 'rviz', 'view_robot_odom.rviz')]
+    package="rviz2",
+    executable="rviz2",
+    name="rviz2",
+    output="screen",
+    arguments=[
+            "-d",
+            PathJoinSubstitution(
+                [FindPackageShare("yaseen_differential_robot"), "rviz", "view_robot_odom.rviz"]
+            ),
+        ],
+        condition=IfCondition(LaunchConfiguration("use_rviz")),
     )
 
     return LaunchDescription(
         [
             use_mock_hardware_arg,
+            use_rviz_arg,
             control_node,
             robot_state_pub_node,
             joint_state_broadcaster_spawner,
