@@ -51,7 +51,7 @@ ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{ax
   ```
 a. running on real robot
 ```bash
-ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_rviz:=false
 ```
 
   ```bash
