@@ -10,8 +10,8 @@ controller_manager:
 
 yaseen_diffbot_controller:
   ros__parameters:
-    left_wheel_names: ['wheel_left_joint'] # the name of the left wheel joint as defined in the URDF
-    right_wheel_names: ['wheel_right_joint'] # the name of the right wheel joint as defined in the URDF
+    left_wheel_names: ['wheel_right_joint'] # the name of the left wheel joint as defined in the URDF
+    right_wheel_names: ['wheel_left_joint'] # the name of the right wheel joint as defined in the URDF
     
     # the wheel separation and radius are defined in meters. The wheel separation is the distance between the centers of the left and right wheels. The wheel radius is the radius of the wheels.
     wheel_separation: 0.5064
@@ -24,7 +24,7 @@ yaseen_diffbot_controller:
     left_wheel_radius_multiplier: 1.0
     right_wheel_radius_multiplier: -1.0
 
-    # 
+    # the rate at which the controller publishes the odometry information
     publish_rate: 50.0 #Hz
     odom_frame_id: odom # the name of the odometry frame as defined in the URDF
     base_frame_id: base_footprint # the name of the base frame as defined in the URDF
