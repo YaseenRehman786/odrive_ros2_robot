@@ -30,7 +30,7 @@ ssh yaseenjetson@192.168.0.133
 
 **Controlling Odrive and Motors**  (https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
 
-**_APPROACH A -> odrive_node_**
+**_APPROACH A -> odrive_node_ (just test things are working)**
 1. Initialize CAN node
 ```bash
 ros2 launch odrive_can example_launch.yaml
@@ -39,10 +39,31 @@ ros2 launch odrive_can example_launch.yaml
 ```bash
 ros2 service call /odrive_axis0/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
 ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
+```  
+
+
+------------------------------------------------------------------
+**_APPROACH B -> odrive_ros2_control_ (my implementation)**
+
+1. Running in RVIZ2 
+  ```bash
+  ros2 launch yaseen_differential_robot control.launch.py
+  ```
+a. running on real robot
+```bash
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_rviz:=false
 ```
 
-**_APPROACH B -> odrive_ros2_control_**
-
+  ```bash
+  ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+  ```
+2. Running in Gazebo
+  ```bash
+  ros2 launch yaseen_differential_robot gz_sim.launch.py
+  ```
+  ```bash
+  ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel
+  ```
 
 ------------------------------------------------------------------
 **Updating Github Repo**  

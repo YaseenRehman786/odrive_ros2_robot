@@ -19,8 +19,9 @@ yaseen_diffbot_controller:
 
     # these multipliers can be used to adjust the wheel separation and radius if the robot is not moving as expected. For example, if the robot is not turning correctly, you can adjust the wheel separation multiplier. If the robot is not moving straight, you can adjust the wheel radius multipliers.
     wheel_separation_multiplier: 1.0
-    left_wheel_radius_multiplier: -1.0
-    right_wheel_radius_multiplier: 1.0
+ 
+    left_wheel_radius_multiplier: -1.0 # this works
+    right_wheel_radius_multiplier: 1.0 # this works
 
     # 
     publish_rate: 50.0 #Hz
