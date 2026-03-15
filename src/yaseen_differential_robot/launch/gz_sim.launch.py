@@ -2,7 +2,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable
+from launch.actions import ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -15,9 +15,15 @@ def generate_launch_description():
     temp_urdf = "/tmp/yaseen_full.urdf"
     temp_sdf = "/tmp/yaseen_full.sdf"
 
+    world_arg = DeclareLaunchArgument(
+        "world",
+        default_value="empty.sdf",
+        description="Name of the world file to load (located in yaseen_differential_robot/worlds)",
+    )
+
     # Set environment variables for Gazebo resource and plugin paths, which is necessary for Gazebo to locate the robot's URDF and SDF files, as well as any custom plugins that are required for the robot to function properly in the Gazebo simulation environment
     world_sdf = PathJoinSubstitution(
-        [FindPackageShare("yaseen_differential_robot"), "worlds", "empty.sdf"]
+        [FindPackageShare("yaseen_differential_robot"), "worlds", LaunchConfiguration("world")]
     )
 
     # Create the robot description parameter by processing the xacro file with the use_gazebo argument set to true, which is necessary to include the Gazebo-specific tags and properties in the generated URDF file, allowing the robot to function properly in Gazebo, as the Gazebo-specific tags and properties are required for the robot to interact correctly with the Gazebo simulation environment and to ensure that the robot's behavior and performance in Gazebo matches its intended design and functionality
@@ -93,8 +99,6 @@ def generate_launch_description():
             temp_sdf,
             "-allow_renaming",
             "false",
-            "-world",
-            "empty",
             "-z",
             "0.5",
         ],
@@ -171,6 +175,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            world_arg,
             set_gz_resource_path,
             set_ign_resource_path,
             set_gz_plugin_path,
