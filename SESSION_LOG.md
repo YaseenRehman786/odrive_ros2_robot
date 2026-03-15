@@ -787,6 +787,102 @@ pkill -9 ros
 
 ---
 
+## March 14, 2026 Update ✅
+
+### Updated CAD / Mesh Merge Into Existing Robot Description
+
+- A new SolidWorks-exported URDF (`Robot_Assembly_Clean_Design.urdf`) and updated mesh set were introduced.
+- Goal: merge the new mechanical design into the existing ROS / Gazebo stack without breaking controller compatibility, launch files, TF naming, or previously tuned simulation behavior.
+- Approach used:
+  - Preserved all existing link and joint names used by the stack (`base_link`, `wheel_left_joint`, `wheel_right_joint`, `caster_left_wheel_link`, `caster_wheel_right_link`, `lidar_link`, etc.)
+  - Updated visual mesh references and inertial properties to match the new CAD export
+  - Kept the proven collision primitives / Gazebo tuning intact (box base collision, cylinder wheel collisions, sphere caster collisions)
+  - Preserved all controller-facing and ros2_control-facing naming for compatibility
+
+#### Key URDF Merge Details
+
+- Updated `robot_description.xacro` to use the refreshed base / wheel / caster / lidar mesh geometry
+- Integrated new caster wheel mesh names:
+  - `caster_left_link.STL`
+  - `caster_right_link.STL`
+- Updated `base_link`, wheel, caster, and lidar inertial values from the new CAD export
+- Updated `lidar_joint` mount position to match the revised design
+- After validation, mesh paths were normalized back to the main `meshes/` directory
+
+#### Important Compatibility Decision
+
+- The robot architecture did **not** change conceptually, so a completely new robot description file was avoided.
+- Instead, the current `robot_description.xacro` remained the canonical source of truth and was carefully evolved in place.
+
+### Caster Contact Re-Tuning After New Mesh Merge
+
+- After the URDF/mesh merge, caster contact needed a final minor correction in Gazebo.
+- Symptom: caster wheels were either slightly underground or floating by about 1–2 mm.
+- Final stable caster collision sphere radius was tuned to:
+  - `0.0382`
+
+This preserved the previously working drive wheel contact behavior while eliminating the remaining caster penetration / floating issue.
+
+### Gazebo LiDAR Simulation Integration
+
+- A 2D LiDAR sensor was added to the Gazebo robot model on `lidar_link`
+- Topic standardized to:
+  - `/scan`
+- Purposefully kept generic so future LiDAR swaps will not require downstream SLAM / Nav2 changes
+
+#### Files Involved
+
+- `urdf/robot_gazebo.xacro`
+- `launch/gz_sim.launch.py`
+- `worlds/empty.sdf`
+
+#### Key Gazebo Sensor Decisions
+
+- World sensor systems were explicitly loaded in `empty.sdf`
+- LiDAR sensor configuration was updated to a Gazebo Fortress-compatible format
+- The robot's `lidar_joint` was preserved so the sensor link remains intact in simulation
+
+### Critical LiDAR Breakthrough
+
+The major issue was **not** just sensor syntax — it was the robot spawn path.
+
+#### What failed
+
+- Spawning the robot directly from `robot_description` via topic into Gazebo
+- In that path, the robot and controllers spawned, but the LiDAR transport topics never became active
+
+#### What worked
+
+- Generate temporary robot files at launch:
+  - `/tmp/yaseen_full.urdf`
+  - `/tmp/yaseen_full.sdf`
+- Convert URDF → SDF before spawning
+- Spawn the robot into Gazebo from the generated SDF file using `ros_gz_sim create -file ...`
+
+This was the decisive fix that caused Gazebo to publish:
+
+- `/scan`
+- `/scan/points`
+
+and allowed ROS 2 to receive valid `sensor_msgs/msg/LaserScan` messages on `/scan`.
+
+### Final Working LiDAR State
+
+- Gazebo publishes scan topics successfully
+- ROS 2 bridge exposes `/scan`
+- `ros2 topic echo /scan --once --qos-reliability best_effort` returns valid scan data
+- Scan ranges show real obstacle returns from the simulation environment
+
+### Notes for Future Continuation
+
+- The current Gazebo LiDAR setup is generic and not tied specifically to RPLidar branding
+- This makes it easier to reuse the same downstream stack with either:
+  - simulated LiDAR in Gazebo, or
+  - a real hardware LiDAR driver publishing to `/scan`
+- Next recommended cleanup item: normalize scan `frame_id` to `lidar_link` if needed before SLAM / Nav2 tuning
+
+---
+
 ## Status Summary
 
 ✅ **Working**:
@@ -804,10 +900,16 @@ pkill -9 ros
 - **Teleop controls correct in simulation**
 - **Real hardware direction and steering now fully aligned with RViz**
 - **ODrive node ID mapping corrected on hardware**
+- **Updated CAD / mesh design merged into existing robot description**
+- **Gazebo caster contact re-tuned after CAD merge**
+- **Gazebo LiDAR simulation publishing valid `/scan` data**
+- **Gazebo robot now spawned from generated SDF for reliable sensor support**
 
 🔄 **Next**:
-- Sensor plugins in Gazebo (lidar, camera)
-- Real ODrive hardware testing (baseline complete; next is sensor-assisted autonomy)
+- RViz LiDAR visualization / frame cleanup
+- SLAM Toolbox in simulation
+- Camera / additional sensor plugins in Gazebo
+- Real ODrive + real LiDAR integration
 - Nav2 integration
 
 ---
@@ -817,8 +919,8 @@ pkill -9 ros
 If continuing in a new chat, provide this entire file and mention:
 - "Continuing from SESSION_LOG.md in yaseen_differential_robot project"
 - Current phase completed: Phase 1, 2 & 3
-- Ready for: LiDAR sensor integration in Gazebo (RPLidar A2), then Nav2 pipeline
+- Ready for: RViz LiDAR validation, SLAM Toolbox in simulation, then Nav2 pipeline
 - All files are in: `/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/`
 - Gazebo branch: `gazebo_gz_sim` at https://github.com/YaseenRehman786/odrive_ros2_robot.git
 
-**Last verified working**: March 10, 2026
+**Last verified working**: March 14, 2026
