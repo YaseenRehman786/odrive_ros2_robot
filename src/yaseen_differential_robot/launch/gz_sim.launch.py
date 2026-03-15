@@ -44,22 +44,14 @@ def generate_launch_description():
         name="GZ_SIM_RESOURCE_PATH",
         value="/home/ysn786/ws_odrive_robot/install/yaseen_differential_robot/share",
     )
-    set_ign_resource_path = SetEnvironmentVariable(
-        name="IGN_GAZEBO_RESOURCE_PATH",
-        value="/home/ysn786/ws_odrive_robot/install/yaseen_differential_robot/share",
-    )
     set_gz_plugin_path = SetEnvironmentVariable(
         name="GZ_SIM_SYSTEM_PLUGIN_PATH",
-        value="/opt/ros/humble/lib",
-    )
-    set_ign_plugin_path = SetEnvironmentVariable(
-        name="IGN_GAZEBO_SYSTEM_PLUGIN_PATH",
-        value="/opt/ros/humble/lib",
+        value="/home/ysn786/gz_ros2_control_ws/install/gz_ros2_control/lib:/opt/ros/humble/lib",
     )
 
     # Launch Gazebo with the specified world file, and set the physics engine to ODE (Open Dynamics Engine), which is necessary for the robot to function properly in Gazebo, as the robot's URDF file is designed to work with the ODE physics engine, and using a different physics engine can cause issues with the robot's behavior and performance in Gazebo
     gz_sim = ExecuteProcess(
-        cmd=["ign", "gazebo", "-r", world_sdf],
+        cmd=["gz", "sim", "-r", world_sdf],
         output="screen",
     )
 
@@ -80,7 +72,7 @@ def generate_launch_description():
             + os.path.join(pkg_share, "urdf", "robot.urdf.xacro")
             + " use_gazebo:=true > "
             + temp_urdf
-            + " && ign sdf -p "
+            + " && gz sdf -p "
             + temp_urdf
             + " > "
             + temp_sdf,
@@ -177,9 +169,7 @@ def generate_launch_description():
         [
             world_arg,
             set_gz_resource_path,
-            set_ign_resource_path,
             set_gz_plugin_path,
-            set_ign_plugin_path,
             gz_sim,
             robot_state_publisher,
             generate_sdf,
