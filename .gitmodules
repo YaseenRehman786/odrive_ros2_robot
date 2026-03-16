@@ -1,3 +1,6 @@
 [submodule "src/ros_odrive"]
     path = src/ros_odrive
     url = https://github.com/YaseenRehman786/ros_odrive.git
+[submodule "src/rplidar_ros"]
+	path = src/rplidar_ros
+	url = https://github.com/YaseenRehman786/rplidar_ros.git
