@@ -4,6 +4,18 @@
 **ROS2 Version**: Humble  
 **Status**: ✅ Phase 1, 2 & 3 Complete - Gazebo Simulation Working
 
+## Quick Navigation
+
+**Last updated**: March 15, 2026
+
+- [Project Overview](#project-overview)
+- [Package Structure Created](#package-structure-created)
+- [Phase 1: Foundation & Visualization ✅](#phase-1-foundation--visualization-)
+- [Phase 2: ros2_control Integration ✅](#phase-2-ros2_control-integration-)
+- [Phase 3: ODrive CAN Hardware Integration ✅](#phase-3-odrive-can-hardware-integration-)
+- [Contact Info for Continuity](#contact-info-for-continuity)
+- [March 15, 2026 — Gazebo Fortress ↔ Harmonic Switching Playbook](#march-15-2026--gazebo-fortress--harmonic-switching-playbook)
+
 ---
 
 ## Project Overview
@@ -924,3 +936,123 @@ If continuing in a new chat, provide this entire file and mention:
 - Gazebo branch: `gazebo_gz_sim` at https://github.com/YaseenRehman786/odrive_ros2_robot.git
 
 **Last verified working**: March 14, 2026
+
+---
+
+## March 15, 2026 — Gazebo Fortress ↔ Harmonic Switching Playbook
+
+This section captures the exact lessons learned while testing Harmonic migration in a separate branch and then returning to Fortress.
+
+### Key conclusions
+
+- For **ROS 2 Humble + Ubuntu 22.04**, Fortress is the native/default pairing and easiest to keep stable.
+- Harmonic works, but requires stricter package/environment handling.
+- Biggest risk is **environment contamination** from previously sourced overlay workspaces.
+
+### A) Fortress restore (recommended default for this project)
+
+#### 1) Package set to use
+
+```bash
+sudo apt remove -y 'ros-humble-ros-gzharmonic*'
+sudo apt install -y \
+  ros-humble-ros-gz \
+  ros-humble-ros-gz-sim \
+  ros-humble-ros-gz-bridge \
+  ros-humble-gz-ros2-control \
+  ros-humble-gz-ros2-control-demos
+```
+
+#### 2) Common launch usage on Fortress
+
+- `ign gazebo` / `ign sdf -p` launch flow is valid on this branch.
+- Launch arg must be `world:=...` (not `worlds:=...`).
+
+#### 3) Critical gotcha (actually happened)
+
+Even after package rollback, simulation crashed because `gz_ros2_control` was still being loaded from `~/gz_ros2_control_ws/install/...` instead of apt (`/opt/ros/humble`).
+
+Root cause: `ws_odrive_robot/install/setup.bash` had stale underlay references baked in during previous builds.
+
+#### 4) Fast workaround
+
+Use local setup instead of chained setup:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/ws_odrive_robot/install/local_setup.bash
+```
+
+#### 5) Permanent cleanup
+
+Rebuild from a clean shell:
+
+```bash
+env -i HOME="$HOME" USER="$USER" TERM="$TERM" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" bash --noprofile --norc
+source /opt/ros/humble/setup.bash
+cd ~/ws_odrive_robot
+rm -rf build install log
+colcon build --symlink-install
+```
+
+#### 6) Validation checks
+
+```bash
+ros2 pkg prefix gz_ros2_control
+# expected: /opt/ros/humble
+
+env | grep -E 'gz_ros2_control_ws|GZ_VERSION' || true
+# expected: no output
+```
+
+### B) Harmonic migration (if needed later)
+
+Use only on migration branch / isolated workflow.
+
+#### 1) Harmonic ROS bridge packages on Humble
+
+```bash
+sudo apt remove -y 'ros-humble-ros-gz*' 'ros-humble-ros-ign*'
+sudo apt install -y \
+  ros-humble-ros-gzharmonic \
+  ros-humble-ros-gzharmonic-sim \
+  ros-humble-ros-gzharmonic-bridge \
+  ros-humble-ros-gzharmonic-image \
+  ros-humble-ros-gzharmonic-interfaces
+```
+
+#### 2) `gz_ros2_control` requirement for Humble + Harmonic
+
+Must build `gz_ros2_control` from source with:
+
+```bash
+export GZ_VERSION=harmonic
+```
+
+If this is missing during build, library may compile in Fortress mode and fail at runtime.
+
+#### 3) Harmonic plugin path requirement
+
+When using source-built control plugin, `GZ_SIM_SYSTEM_PLUGIN_PATH` must include both:
+
+- `~/gz_ros2_control_ws/install/gz_ros2_control/lib`
+- `/opt/ros/humble/lib`
+
+#### 4) Harmonic failure signatures observed
+
+- `Unknown message type [8]/[9]`: wrong bridge package line (non-harmonic)
+- `Could not find shared library [libgz_ros2_control-system.so]`: missing plugin path
+- `symbol [GzPluginHook] missing` / plugin export mismatch: wrong `gz_ros2_control` build mode
+
+### C) Recommended branch strategy going forward
+
+- Keep Fortress as stable default branch for daily dev.
+- Keep Harmonic work isolated in migration branch.
+- Never build/launch one branch while sourcing overlays from the other stack.
+
+### D) Startup-shell recommendation
+
+- Avoid auto-sourcing many workspaces in `.bashrc` if possible.
+- Prefer explicit per-terminal sourcing for the target branch stack.
+
+**Last verified migration/restoration notes added**: March 15, 2026
