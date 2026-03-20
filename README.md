@@ -66,37 +66,49 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
   ```
 
 ------------------------------------------------------------------
-**Update to my Github Repo**  
+**Updating my Github Repo**  
 **1. Update the Main Workspace Only**  
 ```bash
 cd ~/ws_odrive_robot
 git add .
 git commit -m "Update view_robot_pkg"
 git push origin <set origin>
-```  
+```
+**For main branch**
+<set origin> = main
+**For my other branchs**
+<set origin> = branch_name
+
 
 **2. Update a Submodule (ros_odrive or rplidar_ros)**  
 If you make changes inside a submodule, you must commit there first, then "pin" the new version in the main workspace.  
 
-Step A - Commit inside the submodule:
+_Step A - Commit inside the submodule:_
 ```bash
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
 git commit -m "Update submodule: [Description]"
 git push origin <set origin>
 ```  
-# For ros_odrive:
-git push origin main
-# For rplidar_ros:
-git push origin ros2  
+**For ros_odrive:**
+<submodule_folder> = ros_odrive
+<set origin> = origin main
+**For rplidar_ros:**
+<submodule_folder> = rplidar_ros
+<set origin> = origin ros2  
 
-Step B - Update the workspace pointer:  
+_Step B - Update the workspace pointer:_
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
 git commit -m "Bump <submodule_name> submodule"
-git push origin lidar
-```  
+git push origin <set origin>
+```
+**For main branch**
+<set origin> = main
+**For my other branchs**
+<set origin> = branch_name 
+
 
 **3. Sync Forked Submodules with Upstream**  
 Use this to pull the latest official updates from ODrive or SLAMTEC into your own forks.  
