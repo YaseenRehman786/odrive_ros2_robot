@@ -8,9 +8,9 @@ git add .
 git commit -m "Update view_robot_pkg"
 git push origin <branch_name>
 ```
-**For main branch**
+**For main branch**  
 "<branch_name>" = main  
-**For my other branchs**
+**For my other branchs**  
 <branch_name>" = branch_name
 
 
