@@ -43,6 +43,7 @@ def generate_launch_description():
     )   
 
 
+
     # Process the URDF file with xacro
     robot_description_content = Command(
         [
@@ -131,5 +132,6 @@ def generate_launch_description():
             delay_robot_controller,
             rviz_node,
             lidar_node,
+            use_lidar_arg,
         ]
     )
