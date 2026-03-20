@@ -66,6 +66,39 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
   ```
 
 ------------------------------------------------------------------
+**Update to my Github Repo**
+**1. Update the Main Workspace Only**
+```bash
+cd ~/ws_odrive_robot
+git add .
+git commit -m "Update view_robot_pkg"
+git push origin [set origin]
+```  
+
+**2. Update a Submodule (ros_odrive or rplidar_ros)**
+If you make changes inside a submodule, you must commit there first, then "pin" the new version in the main workspace.  
+
+Step A - Commit inside the submodule:
+```bash
+cd ~/ws_odrive_robot/src/<submodule_folder>
+git add .
+git commit -m "Update submodule: [Description]"
+git push origin [set origin]
+```  
+# For ros_odrive:
+git push origin main
+# For rplidar_ros:
+git push origin ros2  
+
+Step B - Update the workspace pointer:  
+```bash
+cd ~/ws_odrive_robot
+git add src/<submodule_folder>
+git commit -m "Bump <submodule_name> submodule"
+git push origin lidar
+```  
+
+------------------------------------------------------------------
 **Updating Github Repo**  
 I have two git worlds:  
 **1. I make changes to odrive_ros2_robot (my main repo) -> commit changes in workspace repo**
