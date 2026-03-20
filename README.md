@@ -9,7 +9,6 @@
 **For my other branchs**
 <workspace_branch> = branch_name
 
-
 **For ros_odrive:**  
 <submodule_folder> = ros_odrive
 <submodule_branch> = main
@@ -51,14 +50,14 @@ git push origin <workspace_branch>
 **3. Sync Forked Submodules with Upstream**  
 Use this to pull the latest official updates from ODrive or SLAMTEC into your own forks.  
 
-Step A - Pull official changes into your fork:
+_Step A - Pull official changes into your fork:_
 ```bash
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git fetch upstream
 git pull --rebase upstream <submodule_branch>
 git push origin <submodule_branch>
 ```  
-Step B - Update the workspace pointer:
+_Step B - Update the workspace pointer:_
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
