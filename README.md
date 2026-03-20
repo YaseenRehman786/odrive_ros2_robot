@@ -67,106 +67,31 @@ git push origin <workspace_branch>
 
 **4. Change BOTH Workspace and Submodule**  
 Always commit the submodule first so the workspace can reference the new commit.  
-Step A - Submodule first:
+_Step A - Commit the submodule first::_
 ```bash
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
 git commit -m "Update submodule"
+git push origin <submodule_branch>
+```
+_Step B - Commit workspace changes:_
+```bash
+cd ~/ws_odrive_robot
+git add .
+git commit -m "Update workspace + bump submodule"
 git push origin <workspace_branch>
 ```
-Step B - Workspace second:
-```bash
-cd ~/ws_odrive_robot
-git add .
-git commit -m "Update workspace + bump submodule"
-git push origin lidar
-```
 
-
-
-
-------------------------------------------------------------------
-**Updating Github Repo**  
-I have two git worlds:  
-**1. I make changes to odrive_ros2_robot (my main repo) -> commit changes in workspace repo**
-```bash
-cd ~/ws_odrive_robot
-git add .
-git commit -m "Update view_robot_pkg"
-git push origin main
-```
-
-**2. I make changes to ros_odrive (a submodule, its own repo, my fork) -> commit changes inside submodule first, then "pin" it in workspace**
-
-  Step A - Commit inside the submodule
-```bash
-cd ~/ws_odrive_robot/src/ros_odrive
-git add .
-git commit -m "My ros_odrive changes"
-git push origin main
-```
-
-  Step B - Tell your workspace repo the submodule moved to a new commit:
-```bash
-cd ~/ws_odrive_robot
-git add src/ros_odrive
-git commit -m "Bump ros_odrive submodule"
-git push origin main
-```
-
-**3. Official odriverobotics update their repo and I want the updates**
-
-  Step A - go inside the submodule (pull official changes, keeps my edits, updates my fork)
-```bash
-cd ~/ws_odrive_robot/src/ros_odrive
-git fetch upstream
-git pull --rebase upstream main
-git push origin main
-```
-  Step B - update workspace pointer
-```bash
-cd ~/ws_odrive_robot
-git add src/ros_odrive
-git commit -m "Update ros_odrive from upstream"
-git push origin main
-```
-
-**4. I change BOTH packages inside my main workspace AND ros_odrive inside my fork**
-
-  Step A - Commit ros_odrive first:
-```bash
-cd ~/ws_odrive_robot/src/ros_odrive
-git add .
-git commit -m "Update ros_odrive"
-git push origin main
-```
-
-  Step B - Commit workspace changes:
-```bash
-cd ~/ws_odrive_robot
-git add .
-git commit -m "Update workspace + bump submodule"
-git push origin main
-```
-
-**5. I make changes on my actual github repo, but also make changes to files on my PC, both repo and github are ahead of eachother**
-
-  Step A - Commit my local changes FIRST
+**5. Syncing when Local and Remote are both ahead**  
+Use this if you made changes on GitHub (web) and your PC at the same time to avoid "merge bubbles."
 ```bash
 cd ~/ws_odrive_robot
 git add .
 git commit -m "My local changes"
+git pull --rebase origin <workspace_branch>
+git push origin <workspace_branch>
 ```
 
-  Step B - Pull my report changes safely (temporarily removes my local commit, download github changes, re-applies my commits ontop)
-```bash
-git pull --rebase origin main
-```
-
-  Step C - 
-```bash
-git push origin main
-```
 **6. To clone and pull both the workspace repo (odrive_ros2_robot) and submodule (src/ros_odrive) on another device/computer**
 ```bash
 git clone --recurse-submodules https://github.com/YaseenRehman786/odrive_ros2_robot.git
@@ -177,10 +102,9 @@ If you forgot --recursive-submodules
 git submodule update --init --recursive
 ```
 
-Pull updates later on that machine
+**7. Pulling Updates on another machine (e.g., Jetson)**
 ```bash
-git pull
+cd ~/ws_odrive_robot
+git pull origin <workspace_branch>
 git submodule update --init --recursive
 ```
-
-
