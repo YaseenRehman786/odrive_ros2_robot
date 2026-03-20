@@ -66,16 +66,16 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
   ```
 
 ------------------------------------------------------------------
-**Update to my Github Repo**
-**1. Update the Main Workspace Only**
+**Update to my Github Repo**  
+**1. Update the Main Workspace Only**  
 ```bash
 cd ~/ws_odrive_robot
 git add .
 git commit -m "Update view_robot_pkg"
-git push origin [set origin]
+git push origin <set origin>
 ```  
 
-**2. Update a Submodule (ros_odrive or rplidar_ros)**
+**2. Update a Submodule (ros_odrive or rplidar_ros)**  
 If you make changes inside a submodule, you must commit there first, then "pin" the new version in the main workspace.  
 
 Step A - Commit inside the submodule:
@@ -83,7 +83,7 @@ Step A - Commit inside the submodule:
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
 git commit -m "Update submodule: [Description]"
-git push origin [set origin]
+git push origin <set origin>
 ```  
 # For ros_odrive:
 git push origin main
@@ -97,6 +97,44 @@ git add src/<submodule_folder>
 git commit -m "Bump <submodule_name> submodule"
 git push origin lidar
 ```  
+
+**3. Sync Forked Submodules with Upstream**  
+Use this to pull the latest official updates from ODrive or SLAMTEC into your own forks.  
+
+Step A - Pull official changes into your fork:
+```bash
+cd ~/ws_odrive_robot/src/<submodule_folder>
+git fetch upstream
+git pull --rebase upstream <branch_name>
+git push origin <branch_name>
+```  
+Step B - Update the workspace pointer:
+```bash
+cd ~/ws_odrive_robot
+git add src/<submodule_folder>
+git commit -m "Update <submodule_name> from upstream"
+git push origin lidar
+```
+
+**4. Change BOTH Workspace and Submodule**  
+Always commit the submodule first so the workspace can reference the new commit.  
+Step A - Submodule first:
+```bash
+cd ~/ws_odrive_robot/src/<submodule_folder>
+git add .
+git commit -m "Update submodule"
+git push origin <branch_name>
+```
+Step B - Workspace second:
+```bash
+cd ~/ws_odrive_robot
+git add .
+git commit -m "Update workspace + bump submodule"
+git push origin lidar
+```
+
+
+
 
 ------------------------------------------------------------------
 **Updating Github Repo**  
