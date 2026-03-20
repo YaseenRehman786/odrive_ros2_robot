@@ -67,6 +67,7 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
 
 ------------------------------------------------------------------
 **Updating my Github Repo**  
+
 **1. Update the Main Workspace Only**  
 ```bash
 cd ~/ws_odrive_robot
@@ -74,9 +75,9 @@ git add .
 git commit -m "Update view_robot_pkg"
 git push origin <set origin>
 ```
-**For main branch**
+**For main branch**  
 <set origin> = main
-**For my other branchs**
+**For my other branchs**  
 <set origin> = branch_name
 
 
@@ -90,10 +91,10 @@ git add .
 git commit -m "Update submodule: [Description]"
 git push origin <set origin>
 ```  
-**For ros_odrive:**
+**For ros_odrive:**  
 <submodule_folder> = ros_odrive
 <set origin> = origin main
-**For rplidar_ros:**
+**For rplidar_ros:**  
 <submodule_folder> = rplidar_ros
 <set origin> = origin ros2  
 
