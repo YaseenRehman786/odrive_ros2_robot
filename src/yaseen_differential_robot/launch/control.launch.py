@@ -130,5 +130,6 @@ def generate_launch_description():
             joint_state_broadcaster_spawner,
             delay_robot_controller,
             rviz_node,
+            lidar_node,
         ]
     )
