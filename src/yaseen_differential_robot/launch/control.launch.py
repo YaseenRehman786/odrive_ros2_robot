@@ -1,12 +1,12 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch.conditions import IfCondition
-
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
@@ -26,7 +26,23 @@ def generate_launch_description():
         default_value='true',
         description='Whether to launch RViz2 for visualization'
     )
+
+    use_lidar_arg = DeclareLaunchArgument(
+        "use_lidar",
+        default_value="true",
+        description="Whether to launch the LiDAR node for the RPLIDAR A2M8 LiDAR sensor"
+    )
     
+    lidar_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [FindPackageShare("yaseen_differential_robot"), "launch", "rp_lidar_a2m8.launch.py"]
+            )
+        ),
+        condition=IfCondition(LaunchConfiguration("use_lidar"))
+    )   
+
+
     # Process the URDF file with xacro
     robot_description_content = Command(
         [

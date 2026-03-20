@@ -19,7 +19,7 @@ def generate_launch_description():
 	
     return LaunchDescription([
         Node(
-            package='rplidar_ros',
+            package='rplidar_ros', # package name, using the ROS2 package rplidar_ros which provides the necessary drivers and interfaces to communicate with the RPLIDAR A2M8 LiDAR sensor, allowing the robot to receive and process data from the LiDAR sensor, which is essential for tasks such as mapping, localization, and obstacle avoidance
             executable='rplidar_node',
             name='rplidar_node',
             output='screen',
