@@ -6,12 +6,12 @@
 cd ~/ws_odrive_robot
 git add .
 git commit -m "Update view_robot_pkg"
-git push origin <set origin>
+git push origin <branch_name>
 ```
 **For main branch**
-"<set origin>" = main  
+"<branch_name>" = main  
 **For my other branchs**
-"<set origin>" = branch_name
+<branch_name>" = branch_name
 
 
 **2. Update a Submodule (ros_odrive or rplidar_ros)**  
