@@ -8,6 +8,7 @@ git add .
 git commit -m "Update view_robot_pkg"
 git push origin <branch_name>
 ```
+
 ```
 For main branch
 "<branch_name>" = main  
@@ -23,26 +24,34 @@ _Step A - Commit inside the submodule:_
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
 git commit -m "Update submodule: [Description]"
-git push origin <set origin>
-```  
-**For ros_odrive:**  
-<submodule_folder> = ros_odrive
-<set origin> = origin main
-**For rplidar_ros:**  
-<submodule_folder> = rplidar_ros
-<set origin> = origin ros2  
+git push origin <submodule_branch>
+```
 
 _Step B - Update the workspace pointer:_
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
 git commit -m "Bump <submodule_name> submodule"
-git push origin <set origin>
+git push origin <branch_name>
 ```
 **For main branch**
 <set origin> = main
 **For my other branchs**
 <set origin> = branch_name 
+
+
+``` 
+**For ros_odrive:**  
+<submodule_folder> = ros_odrive
+<submodule_branch> = main
+**For rplidar_ros:**  
+<submodule_folder> = rplidar_ros
+<submodule_branch> = ros2
+**For main branch**
+<branch_name> = main
+**For my other branchs**
+<branch_name> = branch_name 
+```
 
 
 **3. Sync Forked Submodules with Upstream**  
