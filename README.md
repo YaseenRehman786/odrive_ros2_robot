@@ -8,11 +8,12 @@ git add .
 git commit -m "Update view_robot_pkg"
 git push origin <branch_name>
 ```
+```
 **For main branch**  
 "<branch_name>" = main  
 **For my other branchs**  
 <branch_name>" = branch_name
-
+```
 
 **2. Update a Submodule (ros_odrive or rplidar_ros)**  
 If you make changes inside a submodule, you must commit there first, then "pin" the new version in the main workspace.  
