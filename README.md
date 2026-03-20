@@ -6,7 +6,7 @@
 **For main branch**
 <workspace_branch> = main
 
-**For my other branchs**
+**For my other branches**
 <workspace_branch> = branch_name
 
 **For ros_odrive:**  
@@ -43,7 +43,7 @@ _Step B - Update the workspace pointer:_
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
-git commit -m "Bump <> submodule"
+git commit -m "Bump <submodule_folder> submodule"
 git push origin <workspace_branch>
 ```
 
@@ -67,7 +67,7 @@ git push origin <workspace_branch>
 
 **4. Change BOTH Workspace and Submodule**  
 Always commit the submodule first so the workspace can reference the new commit.  
-_Step A - Commit the submodule first::_
+_Step A - Commit the submodule first:_
 ```bash
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
@@ -92,7 +92,7 @@ git pull --rebase origin <workspace_branch>
 git push origin <workspace_branch>
 ```
 
-**6. To clone and pull both the workspace repo (odrive_ros2_robot) and submodule (src/ros_odrive) on another device/computer**
+**6. To clone and pull both the workspace repo (odrive_ros2_robot) and submodule (src/ros_odrive or src/rplidar_ros) on another device/computer**
 ```bash
 git clone --recurse-submodules https://github.com/YaseenRehman786/odrive_ros2_robot.git
 cd odrive_ros2_robot
