@@ -1,6 +1,20 @@
 ------------------------------------------------------------------
 **Updating my Github Repo**  
 
+**CHEAT SHEET**
+``` 
+**For ros_odrive:**  
+<submodule_folder> = ros_odrive
+<submodule_branch> = main
+**For rplidar_ros:**  
+<submodule_folder> = rplidar_ros
+<submodule_branch> = ros2
+**For main branch**
+<branch_name> = main
+**For my other branchs**
+<branch_name> = branch_name 
+```
+
 **1. Update the Main Workspace Only**  
 ```bash
 cd ~/ws_odrive_robot
@@ -9,12 +23,6 @@ git commit -m "Update view_robot_pkg"
 git push origin <branch_name>
 ```
 
-```
-For main branch
-"<branch_name>" = main  
-For my other branchs 
-<branch_name>" = branch_name
-```
 
 **2. Update a Submodule (ros_odrive or rplidar_ros)**  
 If you make changes inside a submodule, you must commit there first, then "pin" the new version in the main workspace.  
@@ -34,25 +42,6 @@ git add src/<submodule_folder>
 git commit -m "Bump <submodule_name> submodule"
 git push origin <branch_name>
 ```
-**For main branch**
-<set origin> = main
-**For my other branchs**
-<set origin> = branch_name 
-
-
-``` 
-**For ros_odrive:**  
-<submodule_folder> = ros_odrive
-<submodule_branch> = main
-**For rplidar_ros:**  
-<submodule_folder> = rplidar_ros
-<submodule_branch> = ros2
-**For main branch**
-<branch_name> = main
-**For my other branchs**
-<branch_name> = branch_name 
-```
-
 
 **3. Sync Forked Submodules with Upstream**  
 Use this to pull the latest official updates from ODrive or SLAMTEC into your own forks.  
