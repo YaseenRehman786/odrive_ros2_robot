@@ -2,17 +2,20 @@
 **Updating my Github Repo**  
 
 **CHEAT SHEET**
-``` 
+```
+**For main branch**
+<workspace_branch> = main
+**For my other branchs**
+<workspace_branch> = branch_name
+
+
 **For ros_odrive:**  
 <submodule_folder> = ros_odrive
 <submodule_branch> = main
 **For rplidar_ros:**  
 <submodule_folder> = rplidar_ros
 <submodule_branch> = ros2
-**For main branch**
-<branch_name> = main
-**For my other branchs**
-<branch_name> = branch_name 
+
 ```
 
 **1. Update the Main Workspace Only**  
@@ -20,7 +23,7 @@
 cd ~/ws_odrive_robot
 git add .
 git commit -m "Update view_robot_pkg"
-git push origin <branch_name>
+git push origin <workspace_branch>
 ```
 
 
@@ -39,8 +42,8 @@ _Step B - Update the workspace pointer:_
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
-git commit -m "Bump <submodule_name> submodule"
-git push origin <branch_name>
+git commit -m "Bump <> submodule"
+git push origin <workspace_branch>
 ```
 
 **3. Sync Forked Submodules with Upstream**  
@@ -50,15 +53,15 @@ Step A - Pull official changes into your fork:
 ```bash
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git fetch upstream
-git pull --rebase upstream <branch_name>
-git push origin <branch_name>
+git pull --rebase upstream <submodule_branch>
+git push origin <submodule_branch>
 ```  
 Step B - Update the workspace pointer:
 ```bash
 cd ~/ws_odrive_robot
 git add src/<submodule_folder>
-git commit -m "Update <submodule_name> from upstream"
-git push origin lidar
+git commit -m "Update/Sync <submodule_folder> from upstream"
+git push origin <workspace_branch>
 ```
 
 **4. Change BOTH Workspace and Submodule**  
@@ -68,7 +71,7 @@ Step A - Submodule first:
 cd ~/ws_odrive_robot/src/<submodule_folder>
 git add .
 git commit -m "Update submodule"
-git push origin <branch_name>
+git push origin <workspace_branch>
 ```
 Step B - Workspace second:
 ```bash
