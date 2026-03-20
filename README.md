@@ -5,6 +5,7 @@
 ```
 **For main branch**
 <workspace_branch> = main
+
 **For my other branchs**
 <workspace_branch> = branch_name
 
@@ -12,6 +13,7 @@
 **For ros_odrive:**  
 <submodule_folder> = ros_odrive
 <submodule_branch> = main
+
 **For rplidar_ros:**  
 <submodule_folder> = rplidar_ros
 <submodule_branch> = ros2
