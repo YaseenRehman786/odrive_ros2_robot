@@ -31,7 +31,8 @@ ssh yaseenjetson@192.168.0.133
 
 
 ------------------------------------------------------------------
-# **Controlling Odrive and Motors**  (https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
+## **Controlling Odrive and Motors**  
+(https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
 
 **_APPROACH A -> odrive_node_ (just test things are working)**
 1. Initialize CAN node
