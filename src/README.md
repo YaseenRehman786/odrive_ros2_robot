@@ -163,6 +163,7 @@ _Nav2 (Gazebo Sim)_
 ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
 ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
 ```
+**3C. Map Saving**    
 
 _Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph, while Nav2 uses a map `.yaml` file. For localization, set `map_file_name` to posegraph basename (no extension).
 
@@ -170,8 +171,6 @@ _Save Occupancy Map (Nav2: `.yaml` + `.pgm`)_
 ```bash
 ros2 run nav2_map_server map_saver_cli -f ~/ws_odrive_robot/maps/my_map_$(date +%Y%m%d_%H%M)
 ```
-
-**3C. Map Saving**  
 _Save Posegraph (SLAM Toolbox: `.data` / `.posegraph`)_
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
