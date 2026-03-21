@@ -2,18 +2,28 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, RegisterEventHandler, SetEnvironmentVariable, DeclareLaunchArgument
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, SetEnvironmentVariable, DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("yaseen_differential_robot")
     temp_urdf = "/tmp/yaseen_full.urdf"
     temp_sdf = "/tmp/yaseen_full.sdf"
+
+    # # added joystick launch file to the Gazebo simulation launch file, and set the use_sim_time argument to true to ensure that the joystick node uses the simulation time provided by Gazebo, which is necessary for the joystick to function properly in the Gazebo simulation environment, as the joystick node relies on the simulation time to synchronize its operations with the rest of the simulation and to ensure that the joystick inputs are processed correctly in relation to the simulated time in Gazebo
+    # joystick = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(get_package_share_directory("yaseen_differential_robot"), "launch", "joystick.launch.py")
+    #     ),
+    #     launch_arguments=[('use_sim_time', 'true'), ('use_stamped', 'true')]
+    # )
 
     world_arg = DeclareLaunchArgument(
         "world",
@@ -161,7 +171,7 @@ def generate_launch_description():
     scan_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        arguments=["/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"],
+        arguments=["/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan]"],
         output="screen",
     )
 
@@ -175,6 +185,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            # joystick,
             world_arg,
             set_gz_resource_path,
             set_ign_resource_path,

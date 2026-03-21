@@ -107,13 +107,17 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/ya
 
 _Joystick (unstamped, on PC)_
 ```bash
-ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel_unstamped use_stamped:=false
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel_unstamped use_stamped:=false use_sim_time:=false
 ```
 
 **2. Simulated Robot Bringup** 
 
 _Gazebo Sim Bringup (also bringsup RVIZ2)_
 ```bash
+pkill -9 ruby
+pkill -9 ign
+pkill -9 gz
+
 ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf
 ```
 
@@ -124,36 +128,47 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
 
 _Joystick (Gazebo Sim)_
 ```bash
-ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true use_sim_time:=true
 ```
 
 **3. SLAM Mapping**  
 
 _SLAM Mapping_
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=~/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
 ```
 
-_Save Map_
+_Save Occupancy Map (Nav2: `.yaml` + `.pgm`)_
 ```bash
 ros2 run nav2_map_server map_saver_cli -f ~/ws_odrive_robot/maps/my_map_$(date +%Y%m%d_%H%M)
 ```
 
-_SLAM Localization_
+_Save Posegraph (SLAM Toolbox: `.data` / `.posegraph`)_
 ```bash
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=~/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
+stamp=$(date +%Y%m%d_%H%M)
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$HOME/ws_odrive_robot/maps/my_posegraph_${stamp}'}"
+```
+
+_SLAM Localization (Real Robot)_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+```
+
+_SLAM Localization (Gazebo Sim)_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
 ```
 
 _Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph `.data` file, while Nav2 uses a map `.yaml` file.
 
 _Map + 2D Pose Estimate + Goal (Simulation)_
 ```bash
-ros2 launch nav2_bringup bringup_launch.py map:=/home/ysn786/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
+ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
 ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
 ```
 
 _Map + 2D Pose Estimate + Goal (Real Robot)_
 ```bash
-ros2 launch nav2_bringup bringup_launch.py map:=/home/ysn786/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
+ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
 ros2 launch nav2_bringup rviz_launch.py use_sim_time:=false
 ```
