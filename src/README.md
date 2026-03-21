@@ -171,6 +171,7 @@ _Save Occupancy Map (Nav2: `.yaml` + `.pgm`)_
 ros2 run nav2_map_server map_saver_cli -f ~/ws_odrive_robot/maps/my_map_$(date +%Y%m%d_%H%M)
 ```
 
+**3C. Map Saving**  
 _Save Posegraph (SLAM Toolbox: `.data` / `.posegraph`)_
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
