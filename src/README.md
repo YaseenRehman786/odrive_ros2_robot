@@ -28,7 +28,10 @@ ip -details link show can0
 ssh yaseenjetson@192.168.0.133
 ```  
 
-**Controlling Odrive and Motors**  (https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
+
+
+------------------------------------------------------------------
+# **Controlling Odrive and Motors**  (https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
 
 **_APPROACH A -> odrive_node_ (just test things are working)**
 1. Initialize CAN node
@@ -41,12 +44,11 @@ ros2 service call /odrive_axis0/request_axis_state odrive_can/srv/AxisState "{ax
 ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
 ```  
 
-
 ------------------------------------------------------------------
 **_APPROACH B -> odrive_ros2_control_ (my implementation)**
 
 **1. Real Robot Bringup (ros2_control + ODrive + LiDAR)**  
-_Controller bringup (run on Jetson)_ 
+_Controller bringup (on Jetson)_ 
 ```bash
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
 ```
