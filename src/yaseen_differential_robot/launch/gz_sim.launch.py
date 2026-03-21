@@ -171,7 +171,7 @@ def generate_launch_description():
     scan_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        arguments=["/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan]"],
+        arguments=["/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"],
         output="screen",
     )
 

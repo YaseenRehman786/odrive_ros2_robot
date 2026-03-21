@@ -35,13 +35,9 @@ rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 ```
 
-**Building**
+**Build + Source**
 ```bash
 colcon build --symlink-install
-```
-
-**Sourcing**
-```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 source ~/ws_odrive_robot/install/setup.bash
 ```
@@ -114,11 +110,12 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_
 
 _Gazebo Sim Bringup (also bringsup RVIZ2)_
 ```bash
+# Optional cleanup if a previous Gazebo session is stuck:
 pkill -9 ruby
 pkill -9 ign
 pkill -9 gz
 
-ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf
+ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
 ```
 
 _Teleop (Gazebo Sim)_
@@ -131,12 +128,43 @@ _Joystick (Gazebo Sim)_
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true use_sim_time:=true
 ```
 
-**3. SLAM Mapping**  
+**3A. Real Robot — SLAM + Nav2**
 
-_SLAM Mapping_
+_SLAM Mapping (Real Robot)_
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
 ```
+
+_SLAM Localization (Real Robot)_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+```
+
+_Nav2 (Real Robot)_
+```bash
+ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
+ros2 launch nav2_bringup rviz_launch.py use_sim_time:=false
+```
+
+**3B. Gazebo Sim — SLAM + Nav2**
+
+_SLAM Mapping (Gazebo Sim)_
+```bash
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
+```
+
+_SLAM Localization (Gazebo Sim)_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
+```
+
+_Nav2 (Gazebo Sim)_
+```bash
+ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
+ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
+```
+
+_Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph, while Nav2 uses a map `.yaml` file. For localization, set `map_file_name` to posegraph basename (no extension).
 
 _Save Occupancy Map (Nav2: `.yaml` + `.pgm`)_
 ```bash
@@ -147,28 +175,4 @@ _Save Posegraph (SLAM Toolbox: `.data` / `.posegraph`)_
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
 ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$HOME/ws_odrive_robot/maps/my_posegraph_${stamp}'}"
-```
-
-_SLAM Localization (Real Robot)_
-```bash
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
-```
-
-_SLAM Localization (Gazebo Sim)_
-```bash
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
-```
-
-_Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph `.data` file, while Nav2 uses a map `.yaml` file.
-
-_Map + 2D Pose Estimate + Goal (Simulation)_
-```bash
-ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
-ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
-```
-
-_Map + 2D Pose Estimate + Goal (Real Robot)_
-```bash
-ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
-ros2 launch nav2_bringup rviz_launch.py use_sim_time:=false
 ```
