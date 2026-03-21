@@ -1,6 +1,45 @@
-This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Bothweel motors, Intel Realsense D435 camera, and RPLidar.
+This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Botwheel motors, Intel Realsense D435 camera, and RPLidar.
 
 ------------------------------------------------------------------
+**1) Install project dependencies used in this repo**
+```bash
+sudo apt update
+sudo apt install -y \
+	ros-humble-ros2-control \
+	ros-humble-ros2-controllers \
+	ros-humble-controller-manager \
+	ros-humble-diff-drive-controller \
+	ros-humble-joint-state-broadcaster \
+	ros-humble-xacro \
+	ros-humble-robot-state-publisher \
+	ros-humble-joint-state-publisher \
+	ros-humble-rviz2 \
+	ros-humble-slam-toolbox \
+	ros-humble-navigation2 \
+	ros-humble-nav2-bringup \
+	ros-humble-nav2-map-server \
+	ros-humble-twist-mux \
+	ros-humble-joy \
+	ros-humble-teleop-twist-joy \
+	ros-humble-teleop-twist-keyboard \
+	ros-humble-ros-gz \
+	ros-humble-ros-gz-sim \
+	ros-humble-ros-gz-bridge
+```
+
+**2) Resolve and build workspace**
+```bash
+cd ~/ws_odrive_robot
+source /opt/ros/humble/setup.bash
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+```
+
+**Building**
+```bash
+colcon build --symlink-install
+```
+
 **Sourcing**
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
@@ -91,3 +130,32 @@ _Joystick (Gazebo Sim)_
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true
 ```
 
+**3. SLAM Mapping**
+_SLAM Mapping_
+```bash
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=~/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml
+```
+
+_Save Map_
+```bash
+ros2 run nav2_map_server map_saver_cli -f ~/ws_odrive_robot/maps/my_map_$(date +%Y%m%d_%H%M)
+```
+
+_SLAM Localization_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=~/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
+```
+
+_Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph `.data` file, while Nav2 uses a map `.yaml` file.
+
+_Map + 2D Pose Estimate + Goal (Simulation)_
+```bash
+ros2 launch nav2_bringup bringup_launch.py map:=/home/ysn786/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
+ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
+```
+
+_Map + 2D Pose Estimate + Goal (Real Robot)_
+```bash
+ros2 launch nav2_bringup bringup_launch.py map:=/home/ysn786/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
+ros2 launch nav2_bringup rviz_launch.py use_sim_time:=false
+```
