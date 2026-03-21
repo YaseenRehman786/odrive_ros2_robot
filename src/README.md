@@ -44,6 +44,11 @@ ros2 launch odrive_can example_launch.yaml
 ros2 service call /odrive_axis0/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
 ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
 ```  
+3. Run simple velocity check (one for each motor, node id 0, node id 1)
+```bash
+ros2 topic pub /odrive_axis0/control_message odrive_can/msg/ControlMessage "{control_mode: 2, input_mode: 1, input_pos: 0.0, input_vel: 1.0, input_torque: 0.0}"
+ros2 topic pub /odrive_axis1/control_message odrive_can/msg/ControlMessage "{control_mode: 2, input_mode: 1, input_pos: 0.0, input_vel: 1.0, input_torque: 0.0}"
+```
 
 ------------------------------------------------------------------
 **_APPROACH B -> odrive_ros2_control_ (my implementation)**
