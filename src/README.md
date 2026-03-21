@@ -48,9 +48,6 @@ source ~/ws_odrive_robot/install/setup.bash
 
 **CAN Bringup**
 ```bash
-source /opt/ros/$ROS_DISTRO/setup.bash
-source ~/ws_odrive_robot/install/setup.bash
-
 sudo modprobe can
 sudo modprobe can_raw
 sudo modprobe gs_usb
@@ -130,7 +127,8 @@ _Joystick (Gazebo Sim)_
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true
 ```
 
-**3. SLAM Mapping**
+**3. SLAM Mapping**  
+
 _SLAM Mapping_
 ```bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=~/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml
