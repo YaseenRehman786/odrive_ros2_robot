@@ -6,7 +6,7 @@
 
 ## Quick Navigation
 
-**Last updated**: March 15, 2026
+**Last updated**: March 20, 2026
 
 - [Project Overview](#project-overview)
 - [Package Structure Created](#package-structure-created)
@@ -15,6 +15,7 @@
 - [Phase 3: ODrive CAN Hardware Integration ✅](#phase-3-odrive-can-hardware-integration-)
 - [Contact Info for Continuity](#contact-info-for-continuity)
 - [March 15, 2026 — Gazebo Fortress ↔ Harmonic Switching Playbook](#march-15-2026--gazebo-fortress--harmonic-switching-playbook)
+- [March 19-20, 2026 — Real Robot LiDAR + SLAM + Joystick Integration](#march-19-20-2026--real-robot-lidar--slam--joystick-integration)
 
 ---
 
@@ -1056,3 +1057,138 @@ When using source-built control plugin, `GZ_SIM_SYSTEM_PLUGIN_PATH` must include
 - Prefer explicit per-terminal sourcing for the target branch stack.
 
 **Last verified migration/restoration notes added**: March 15, 2026
+
+---
+
+## March 19-20, 2026 — Real Robot LiDAR + SLAM + Joystick Integration
+
+### Summary
+
+Successfully brought up RPLIDAR A2M8 on physical Jetson robot, mapped environment with SLAM Toolbox, and integrated PS4 joystick controller with parametrized launch for seamless sim/real switching.
+
+### A) Real LiDAR Hardware Bring-Up (March 19)
+
+**Hardware Identification**
+- Device: RPLIDAR A2M8 (CP2102 USB bridge)
+- Serial Port: `/dev/rplidar` (via udev rule)
+- Baudrate: 115200
+- Scan Mode: **Standard** (12m max range, 10 Hz, 2K points)
+- Frame ID: `lidar_link`
+
+**Commissioning Steps**
+1. Connected 5V power supply (1A minimum) with shared ground.
+2. Ran device discovery:
+   ```bash
+   ls -l /dev/serial/by-id/
+   ```
+3. Installed rplidar_ros ROS2 package (cloned into workspace).
+4. Set permissions:
+   ```bash
+   sudo usermod -a -G dialout $USER
+   cd ~/ws_odrive_robot/src/rplidar_ros && source scripts/create_udev_rules.sh
+   ```
+5. Identified scan mode by test-launching A1/A2M8/A2M12/A3 variants (A2M8 matched).
+
+**Key Configuration**
+- [src/yaseen_differential_robot/launch/rp_lidar_a2m8.launch.py](src/yaseen_differential_robot/launch/rp_lidar_a2m8.launch.py)
+  - `serial_port: /dev/rplidar`
+  - `frame_id: lidar_link`
+  - `scan_mode: Standard`
+  - `inverted: false` (after fixing URDF yaw transform)
+
+**Frame Alignment Fix**
+- Initial Left/Right+Front/Back reversal in RViz.
+- Root cause: LiDAR mounted backwards relative to base_link.
+- **Solution**: In [src/yaseen_differential_robot/urdf/robot_description.xacro](src/yaseen_differential_robot/urdf/robot_description.xacro#L322-L331):
+  - Changed `lidar_joint` rpy from `0 0 0` to `0 0 3.14159265359` (180° yaw).
+  - Test: hand on right → RViz right; hand forward → RViz forward ✓
+
+### B) SLAM Mapping (March 19-20)
+
+**Successful Mapping Run**
+```bash
+# Terminal 1: Real robot bringup on Jetson
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+
+# Terminal 2: Desktop SLAM (used vendor defaults after temp file missing)
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/tmp/slam_mapping.yaml
+
+# Terminal 3: RViz (set Fixed Frame to 'map', add /map + /scan displays)
+rviz2
+```
+
+**Outcome**
+- Map saved: `/home/ysn786/ws_odrive_robot/maps/my_map_20260319_2336.yaml/.pgm`
+- Size: 286 × 205 cells @ 0.05 m/pixel
+- Health: Valid for Nav2 localization/navigation
+
+**Minor Observations**
+- One TF extrapolation warning (clock sync between Jetson/desktop slightly off).
+- Used vendor defaults for scan limits (nominally 0–25m, actual 0.2–12m); no critical blocking.
+
+### C) PS4 Joystick Integration (March 20)
+
+**Working Joystick Setup**
+- Package: `joy` + `teleop_twist_joy`
+- Config: [src/yaseen_differential_robot/config/joystick.yaml](src/yaseen_differential_robot/config/joystick.yaml)
+  - Fixed YAML syntax: `ros_parameters:` → `ros__parameters:` (double underscore required).
+- Launch: [src/yaseen_differential_robot/launch/joystick.launch.py](src/yaseen_differential_robot/launch/joystick.launch.py)
+
+**Real/Sim Launcher Flexibility**
+- Real robot default: publishes to `/yaseen_diffbot_controller/cmd_vel_unstamped`
+- Gazebo sim: needs to target `/cmd_vel` (or controller-specific topic).
+
+**Parametrized Launch Solution**
+```python
+# In joystick.launch.py
+from launch import LaunchDescription, LaunchConfiguration
+
+cmd_vel_topic = LaunchConfiguration('cmd_vel_topic', default='/yaseen_diffbot_controller/cmd_vel_unstamped')
+# Inside teleop_node: remappings=[('/cmd_vel', cmd_vel_topic)]
+```
+
+**Usage**
+- Real robot: `ros2 launch yaseen_differential_robot joystick.launch.py` (uses unstamped default).
+- Gazebo: `ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel`.
+- Custom: `ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/any_topic`.
+
+### D) Next Steps (Immediate)
+
+1. **Nav2 full stack integration** (in progress):
+   - Copy/customize `/opt/ros/humble/share/nav2_bringup/params/nav2_params.yaml` → your package.
+   - Set AMCL/controller/planner frame/topic bindings.
+   - Test navigation with 2D goals in RViz.
+
+2. **Clock sync tuning** (if TF warnings persist):
+   - Consider `chrony` or NTP sync between Jetson and desktop.
+
+3. **Joystick + Nav2 fallback**:
+   - Current: joystick works on real (full manual teleop).
+   - Future: integrate emergency stop / hybrid nav mode.
+
+### E) Hardware/Software Inventory (As of March 20)
+
+**Physical**
+- Jetson Orin Nano Super
+- RPLIDAR A2M8 (12m, 10 Hz)
+- 2× ODrive S1 motor controllers
+- 2× ODrive botwheels
+- 2× caster wheels
+- PS4 DualShock controller
+
+**ROS2 Stack**
+- Humble
+- Gazebo Fortress (stable branch)
+- SLAM Toolbox (mapping)
+- Nav2 (bringup pending)
+- ros2_control / diff_drive_controller
+- rplidar_ros (A2M8 driver)
+- joy / teleop_twist_joy (joystick)
+
+**Saved Artifacts**
+- Robot URDF/Xacro
+- Gazebo worlds (empty, office, warehouse, hospital)
+- SLAM map: `my_map_20260319_2336`
+- Launch files parametrized for sim/real switching
+
+**Last verified real hardware run**: March 20, 2026
