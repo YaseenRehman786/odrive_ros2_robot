@@ -133,51 +133,140 @@ _Twist Mux (Gazebo Sim, required for Nav2 + joystick safety override)_
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
-**3A. Real Robot — SLAM + Nav2**
+**3A. Gazebo Sim — Full Workflow (Create Map → Save → Localize → Nav2)**
 
-_SLAM Mapping (Real Robot)_
+### 3A-0) Cleanup (if needed)
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
+pkill -f "nav2_bringup|slam_toolbox|twist_mux|gz_sim.launch.py|ign gazebo" || true
 ```
 
-_SLAM Localization (Real Robot)_
+### 3A-1) Create a map in Gazebo
+_Terminal 1: Gazebo Sim_
 ```bash
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
 ```
 
-_Nav2 (Real Robot)_
+_Terminal 2: twist_mux (optional but recommended for joystick safety override)_
 ```bash
-ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=false autostart:=true
-ros2 launch nav2_bringup rviz_launch.py use_sim_time:=false
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
-**3B. Gazebo Sim — SLAM + Nav2**
-
-_SLAM Mapping (Gazebo Sim)_
+_Terminal 3: Joystick teleop through mux_
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
 ```
 
-_SLAM Localization (Gazebo Sim)_
+_Terminal 4: SLAM mapping (NOT localization)_
 ```bash
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
 ```
 
-_Nav2 (Gazebo Sim)_
-```bash
-ros2 launch nav2_bringup bringup_launch.py map:=$HOME/ws_odrive_robot/maps/my_map_xxxxxxxx_xxxx.yaml use_sim_time:=true autostart:=true
-ros2 launch nav2_bringup rviz_launch.py use_sim_time:=true
-```
-**3C. Map Saving**    
+Drive the robot around the environment until the map is complete.
 
-_Note:_ `slam_localization.yaml` uses a slam_toolbox posegraph, while Nav2 uses a map `.yaml` file. For localization, set `map_file_name` to posegraph basename (no extension).
-
-_Save Occupancy Map (Nav2: `.yaml` + `.pgm`)_
-```bash
-ros2 run nav2_map_server map_saver_cli -f ~/ws_odrive_robot/maps/my_map_$(date +%Y%m%d_%H%M)
-```
-_Save Posegraph (SLAM Toolbox: `.data` / `.posegraph`)_
+### 3A-2) Save map + posegraph
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
-ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$HOME/ws_odrive_robot/maps/my_posegraph_${stamp}'}"
+session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
+mkdir -p "$session_dir"
+ros2 run nav2_map_server map_saver_cli -f "$session_dir/map"
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$session_dir/posegraph'}"
 ```
+
+This creates:
+- Occupancy map for Nav2: `.../<stamp>/map.yaml` + `map.pgm`
+- Posegraph for SLAM localization: `.../<stamp>/posegraph.posegraph` (+ `.data`)
+
+### 3A-3) Update `slam_localization.yaml` to use the new posegraph
+`map_file_name` must point to the posegraph base path (no extension).
+
+```bash
+posegraph_base=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "posegraph.posegraph" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2- | sed 's/\.posegraph$//')
+sed -i "s|^\s*map_file_name:.*|    map_file_name: ${posegraph_base}|" /home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
+grep "map_file_name:" /home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
+```
+
+### 3A-4) Run localization + Nav2 using saved files
+_Cleanup mapping processes first if still running:_
+```bash
+pkill -f "slam_toolbox.*online_async_launch" || true
+```
+
+_Terminal 2 (or new): SLAM localization_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
+```
+
+_Terminal 5: Nav2 with latest saved occupancy map_
+```bash
+MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+ros2 launch nav2_bringup bringup_launch.py map:="$MAP" use_sim_time:=true autostart:=true
+```
+
+_Important:_ In RViz, set initial pose once using **2D Pose Estimate** before sending Nav2 goals.
+
+_Important:_ During navigation, use one localization source only (do not run AMCL and SLAM localization simultaneously).
+
+**3B. Real Robot — Mapping First (No Existing Room Map)**
+
+_Terminal 1 (Jetson): robot + lidar + ros2_control_
+```bash
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+```
+
+_Terminal 2 (PC): twist_mux_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+```
+
+_Terminal 3 (PC): joystick teleop_
+```bash
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+```
+
+_Terminal 4 (PC): SLAM mapping_
+```bash
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
+```
+
+Drive robot around the room, then save both map formats:
+
+```bash
+stamp=$(date +%Y%m%d_%H%M)
+session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
+mkdir -p "$session_dir"
+ros2 run nav2_map_server map_saver_cli -f "$session_dir/map"
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$session_dir/posegraph'}"
+```
+
+**3C. Real Robot — Localization + Nav2 (After Map Is Saved)**
+
+_Terminal 1 (Jetson): robot + lidar + ros2_control_
+```bash
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+```
+
+_Terminal 2 (PC): twist_mux_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+```
+
+_Terminal 3 (PC): joystick safety override_
+```bash
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+```
+
+_Terminal 4 (PC): SLAM localization_
+```bash
+ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+```
+
+_Terminal 5 (PC): Nav2 with the saved map yaml_
+```bash
+MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+ros2 launch nav2_bringup bringup_launch.py map:="$MAP" use_sim_time:=false autostart:=true
+```
+
+_Important notes_
+- Use only one localization source at a time during navigation.
+- Keep command pipeline unstamped to controller: `/yaseen_diffbot_controller/cmd_vel_unstamped`.
+- For safety override with joystick + Nav2, publish joystick to `/cmd_vel_joy` and let `twist_mux` arbitrate.
