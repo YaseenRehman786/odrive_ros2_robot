@@ -167,11 +167,14 @@ def generate_launch_description():
         )
     )
 
-    # Create the robot controller node to control the robot in Gazebo
+    # Create ROS <-> Gazebo bridges for scan and simulation clock
     scan_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        arguments=["/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan"],
+        arguments=[
+            "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+            "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+        ],
         output="screen",
     )
 

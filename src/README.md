@@ -120,12 +120,17 @@ ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_s
 
 _Teleop (Gazebo Sim)_
 ```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=false -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
 _Joystick (Gazebo Sim)_
 ```bash
-ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel use_stamped:=true use_sim_time:=true
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
+```
+
+_Twist Mux (Gazebo Sim, required for Nav2 + joystick safety override)_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
 **3A. Real Robot — SLAM + Nav2**

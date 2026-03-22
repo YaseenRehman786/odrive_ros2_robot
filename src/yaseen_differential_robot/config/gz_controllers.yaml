@@ -11,6 +11,7 @@ controller_manager:
 
 yaseen_diffbot_controller:
   ros__parameters:
+    use_stamped_vel: false
     use_sim_time: true
     left_wheel_names: ["wheel_left_joint"]
     right_wheel_names: ["wheel_right_joint"]
