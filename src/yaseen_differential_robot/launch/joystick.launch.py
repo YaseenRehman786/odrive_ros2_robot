@@ -49,6 +49,7 @@ def generate_launch_description():
         name = 'teleop_node',
         parameters=[joy_params, {'publish_stamped_twist': use_stamped}],
         remappings=[('/cmd_vel', cmd_vel_topic)]
+        #remappings=[('/cmd_vel', '/cmd_vel_joy')]
     )
 
     # twist_stamper = Node(
