@@ -1,6 +1,7 @@
 This repository will be for my autonomous robot project where I will be using a Jetson Orin Nano Super, Odrive S1 FOC controllers, Odrive Botwheel motors, Intel Realsense D435 camera, and RPLidar.
 
 ------------------------------------------------------------------
+# General Setup
 **1) Install project dependencies used in this repo**
 ```bash
 sudo apt update
@@ -63,10 +64,10 @@ ssh yaseenjetson@192.168.0.133
 
 
 ------------------------------------------------------------------
-## **Controlling Odrive and Motors**  
+# **Controlling Odrive and Motors**  
 (https://docs.odriverobotics.com/v/latest/guides/ros-package.html)
 
-**_APPROACH A -> odrive_node_ (just test things are working)**
+## **_APPROACH A -> odrive_node_ (just test things are working)**
 1. Initialize CAN node
 ```bash
 ros2 launch odrive_can example_launch.yaml
@@ -83,9 +84,9 @@ ros2 topic pub /odrive_axis1/control_message odrive_can/msg/ControlMessage "{con
 ```
 
 ------------------------------------------------------------------
-**_APPROACH B -> odrive_ros2_control_ (my implementation)**
+## **_APPROACH B -> odrive_ros2_control_ (my implementation)**
 
-## 1) Real Robot Bringup (ros2_control + ODrive + LiDAR)
+### 1) Real Robot Bringup (ros2_control + ODrive + LiDAR)
 _Controller bringup (on Jetson)_ 
 ```bash
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
@@ -106,7 +107,7 @@ _Joystick (unstamped, on PC)_
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel_unstamped use_stamped:=false use_sim_time:=false
 ```
 
-## 2) Simulated Robot Bringup
+### 2) Simulated Robot Bringup
 
 _Gazebo Sim Bringup (also bringsup RVIZ2)_
 ```bash
@@ -133,9 +134,9 @@ _Twist Mux (Gazebo Sim, required for Nav2 + joystick safety override)_
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
-## 3) SLAM + Nav2 Workflows
+### 3) SLAM + Nav2 Workflows
 
-### **3A. Gazebo Sim — Full Workflow (Create Map → Save → Localize → Nav2)**
+#### **3A. Gazebo Sim — Full Workflow (Create Map → Save → Localize → Nav2)**
 
 **3A-0) Cleanup (if needed)**
 ```bash
@@ -208,7 +209,7 @@ _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before se
 
 _Important:_ During navigation, use one localization source only (do not run AMCL and SLAM localization simultaneously).
 
-### **3B. Real Robot — Full Workflow (Create Map → Save → Localize → Nav2)**
+#### **3B. Real Robot — Full Workflow (Create Map → Save → Localize → Nav2)**
 
 **3B-0) Cleanup (if needed)**
 ```bash
