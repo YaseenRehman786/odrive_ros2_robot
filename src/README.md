@@ -85,7 +85,7 @@ ros2 topic pub /odrive_axis1/control_message odrive_can/msg/ControlMessage "{con
 ------------------------------------------------------------------
 **_APPROACH B -> odrive_ros2_control_ (my implementation)**
 
-**1. Real Robot Bringup (ros2_control + ODrive + LiDAR)**  
+## 1) Real Robot Bringup (ros2_control + ODrive + LiDAR)
 _Controller bringup (on Jetson)_ 
 ```bash
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
@@ -106,7 +106,7 @@ _Joystick (unstamped, on PC)_
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel_unstamped use_stamped:=false use_sim_time:=false
 ```
 
-**2. Simulated Robot Bringup** 
+## 2) Simulated Robot Bringup
 
 _Gazebo Sim Bringup (also bringsup RVIZ2)_
 ```bash
@@ -133,14 +133,16 @@ _Twist Mux (Gazebo Sim, required for Nav2 + joystick safety override)_
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
+## 3) SLAM + Nav2 Workflows
+
 **3A. Gazebo Sim — Full Workflow (Create Map → Save → Localize → Nav2)**
 
-### 3A-0) Cleanup (if needed)
+**3A-0) Cleanup (if needed)**
 ```bash
 pkill -f "nav2_bringup|slam_toolbox|twist_mux|gz_sim.launch.py|ign gazebo" || true
 ```
 
-### 3A-1) Create a map in Gazebo
+**3A-1) Create a map in Gazebo**
 _Terminal 1: Gazebo Sim_
 ```bash
 ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
@@ -163,7 +165,7 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/w
 
 Drive the robot around the environment until the map is complete.
 
-### 3A-2) Save map + posegraph
+**3A-2) Save map + posegraph**
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
 session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
@@ -176,7 +178,7 @@ This creates:
 - Occupancy map for Nav2: `.../<stamp>/map.yaml` + `map.pgm`
 - Posegraph for SLAM localization: `.../<stamp>/posegraph.posegraph` (+ `.data`)
 
-### 3A-3) Update `slam_localization.yaml` to use the new posegraph
+**3A-3) Update `slam_localization.yaml` to use the new posegraph**
 `map_file_name` must point to the posegraph base path (no extension).
 
 ```bash
@@ -185,7 +187,7 @@ sed -i "s|^\s*map_file_name:.*|    map_file_name: ${posegraph_base}|" /home/ysn7
 grep "map_file_name:" /home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
 ```
 
-### 3A-4) Run localization + Nav2 using saved files
+**3A-4) Run localization + Nav2 using saved files**
 _Cleanup mapping processes first if still running:_
 ```bash
 pkill -f "slam_toolbox.*online_async_launch" || true
