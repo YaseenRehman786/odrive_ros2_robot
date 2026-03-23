@@ -26,7 +26,7 @@ def generate_launch_description():
     # )
 
     # add twist mux
-    twist_mux_params = os.path.join(get_package_share_directory(pkg_share), 'config', 'twist_mux.yaml')
+    twist_mux_params = os.path.join(pkg_share, 'config', 'twist_mux.yaml')
     twist_mux = Node(
         package='twist_mux',
         executable='twist_mux',

@@ -137,6 +137,49 @@ ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/
 
 ### 3) SLAM + Nav2 Workflows  
 
+#### **3-Quick) Fast Preflight Checklists (Do This Before Sending Goals)**
+
+Use this as a rapid verification list so you do not miss a required node.
+
+**A) Nav2 + SLAM Localization Checklist**
+- [ ] Exactly one localization source is running: **SLAM localization** (`slam_toolbox localization_launch.py`).
+- [ ] AMCL is **not** running.
+- [ ] Robot/control stack is up:
+	- Gazebo: `gz_sim.launch.py` is running.
+	- Real robot: `control.launch.py use_mock_hardware:=false use_lidar:=true` is running.
+- [ ] `twist_mux` is running and output remap is `/yaseen_diffbot_controller/cmd_vel_unstamped`.
+- [ ] Nav2 is running from your launch: `ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=<true|false>`.
+- [ ] RViz fixed frame is `map`, then set **2D Pose Estimate** once.
+- [ ] Quick checks pass:
+```bash
+ros2 node list | grep -E "slam_toolbox|amcl|bt_navigator|controller_server|planner_server|twist_mux"
+ros2 topic hz /clock            # required in sim (should publish)
+ros2 topic echo /cmd_vel --once # Nav2 command output present when navigating
+```
+
+**B) Nav2 + AMCL Localization Checklist**
+- [ ] Exactly one localization source is running: **AMCL** (`localization_launch.py` from your package).
+- [ ] SLAM localization is **not** running.
+- [ ] AMCL map path is valid (`map:=.../map.yaml`).
+- [ ] Robot/control stack is up:
+	- Gazebo: `gz_sim.launch.py` is running.
+	- Real robot: `control.launch.py use_mock_hardware:=false use_lidar:=true` is running.
+- [ ] `twist_mux` is running and output remap is `/yaseen_diffbot_controller/cmd_vel_unstamped`.
+- [ ] Nav2 is running with transient local map subscribe:
+	- `ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=<true|false> map_subscribe_transient_local:=true`
+- [ ] RViz setup is complete: Fixed Frame=`map`, click **2D Pose Estimate**, map/costmap durability set to **Transient Local**.
+- [ ] Quick checks pass:
+```bash
+ros2 node list | grep -E "amcl|slam_toolbox|bt_navigator|controller_server|planner_server|twist_mux"
+ros2 topic hz /clock            # required in sim (should publish)
+ros2 topic echo /amcl_pose --once
+```
+
+**If a goal is accepted but robot does not move, check immediately**
+- [ ] `ros2 topic echo /yaseen_diffbot_controller/cmd_vel_unstamped --once`
+- [ ] `ros2 topic echo /yaseen_diffbot_controller/odom --once`
+- [ ] No duplicate `twist_mux` processes are running.
+
 #### **3A. Gazebo Sim — Full Workflow (Create Map → Save → Localize → Nav2)**  
 
 **3A-0) Cleanup (if needed)**  
