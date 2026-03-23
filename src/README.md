@@ -162,7 +162,7 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 
 _Terminal 4: SLAM mapping (NOT localization)_
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
+ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
 ```
 
 Drive the robot around the environment until the map is complete.
@@ -272,7 +272,7 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 
 _Terminal 4 (PC): SLAM mapping (NOT localization)_
 ```bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
+ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
 ```
 
 Drive robot around the room until the map is complete.
