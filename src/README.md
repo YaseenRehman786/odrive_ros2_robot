@@ -209,14 +209,52 @@ _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before se
 
 _Important:_ During navigation, use one localization source only (do not run AMCL and SLAM localization simultaneously).
 
-#### **3B. Real Robot — Full Workflow (Create Map → Save → Localize → Nav2)**
+#### **3B. Gazebo Sim — AMCL + Nav2 Workflow (Map-Based Localization)**
 
-**3B-0) Cleanup (if needed)**  
+Use this flow when you want Nav2 with AMCL localization (instead of SLAM localization).
+
+**3B-1) Bring up simulation + control pipeline**
+_Terminal 1: Gazebo sim_
+```bash
+ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
+```
+
+_Terminal 2: twist_mux_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+```
+
+_Terminal 3: joystick teleop through mux_
+```bash
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+```
+
+**3B-2) Launch AMCL localization + Nav2**
+_Terminal 4: AMCL localization_
+```bash
+ros2 launch nav2_bringup localization_launch.py map:=$HOME/ws_odrive_robot/maps/hopital/my_map_hospital20260321_0015.yaml use_sim_time:=true
+```
+
+_Terminal 5: Nav2_
+```bash
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
+```
+
+**3B-3) RViz setup required for AMCL/costmaps**
+- Set RViz **Fixed Frame** to `map` manually.
+- Click **2D Pose Estimate** once to initialize AMCL; this allows costmaps to load.
+- Set the AMCL/costmap map display durability to **Transient Local** so the map is visible.
+
+_Important:_ For navigation, run only one localization source at a time (AMCL **or** SLAM localization, not both).
+
+#### **3C. Real Robot — Full Workflow (Create Map → Save → Localize → Nav2)**
+
+**3C-0) Cleanup (if needed)**  
 ```bash
 pkill -f "nav2_bringup|slam_toolbox|twist_mux|joystick.launch.py|control.launch.py" || true
 ```
 
-**3B-1) Create a map on the real robot**  
+**3C-1) Create a map on the real robot**  
 _Terminal 1 (Jetson): robot + lidar + ros2_control_
 ```bash
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
@@ -239,7 +277,7 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/ysn786/w
 
 Drive robot around the room until the map is complete.
 
-**3B-2) Save map + posegraph**
+**3C-2) Save map + posegraph**
 ```bash
 stamp=$(date +%Y%m%d_%H%M)
 session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
@@ -252,7 +290,7 @@ This creates:
 - Occupancy map for Nav2: `.../<stamp>/map.yaml` + `map.pgm`
 - Posegraph for SLAM localization: `.../<stamp>/posegraph.posegraph` (+ `.data`)
 
-**3B-3) Update `slam_localization.yaml` to use the new posegraph**  
+**3C-3) Update `slam_localization.yaml` to use the new posegraph**  
 `map_file_name` must point to the posegraph base path (no extension).
 
 ```bash
@@ -261,7 +299,7 @@ sed -i "s|^\s*map_file_name:.*|    map_file_name: ${posegraph_base}|" /home/ysn7
 grep "map_file_name:" /home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml
 ```
 
-**3B-4) Run localization + Nav2 using saved files**  
+**3C-4) Run localization + Nav2 using saved files**  
 _Cleanup mapping process first if still running:_
 ```bash
 pkill -f "slam_toolbox.*online_async_launch" || true
@@ -283,3 +321,47 @@ _Important notes_
 - Use only one localization source at a time during navigation.
 - Keep command pipeline unstamped to controller: `/yaseen_diffbot_controller/cmd_vel_unstamped`.
 - For safety override with joystick + Nav2, publish joystick to `/cmd_vel_joy` and let `twist_mux` arbitrate.
+
+#### **3D. Real Robot — AMCL + Nav2 Workflow (Map-Based Localization)**
+
+Use this flow when you want Nav2 with AMCL localization on hardware (instead of SLAM localization).
+
+**3D-0) Cleanup (if needed)**
+```bash
+pkill -f "nav2_bringup|slam_toolbox|twist_mux|joystick.launch.py|control.launch.py" || true
+```
+
+**3D-1) Bring up robot + control pipeline**
+_Terminal 1 (Jetson): robot + lidar + ros2_control_
+```bash
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+```
+
+_Terminal 2 (PC): twist_mux_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+```
+
+_Terminal 3 (PC): joystick teleop through mux_
+```bash
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+```
+
+**3D-2) Launch AMCL localization + Nav2**
+_Terminal 4 (PC): AMCL localization_
+```bash
+MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+ros2 launch nav2_bringup localization_launch.py map:="$MAP" use_sim_time:=false
+```
+
+_Terminal 5 (PC): Nav2_
+```bash
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
+```
+
+**3D-3) RViz setup required for AMCL/costmaps**
+- Set RViz **Fixed Frame** to `map` manually.
+- Click **2D Pose Estimate** once to initialize AMCL; this allows costmaps to load.
+- Set the AMCL/costmap map display durability to **Transient Local** so the map is visible.
+
+_Important:_ For navigation, run only one localization source at a time (AMCL **or** SLAM localization, not both).
