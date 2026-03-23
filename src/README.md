@@ -38,6 +38,7 @@ colcon build --symlink-install
 
 **Build + Source**
 ```bash
+cd ~/ws_odrive_robot
 colcon build --symlink-install
 source /opt/ros/$ROS_DISTRO/setup.bash
 source ~/ws_odrive_robot/install/setup.bash
