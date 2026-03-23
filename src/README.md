@@ -202,7 +202,7 @@ ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/w
 
 _Terminal 5: Nav2 (without AMCL interference)_
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true
 ```
 
 _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before sending Nav2 goals.
@@ -232,12 +232,12 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 **3B-2) Launch AMCL localization + Nav2**  
 _Terminal 4: AMCL localization_
 ```bash
-ros2 launch nav2_bringup localization_launch.py map:=$HOME/ws_odrive_robot/maps/hopital/my_map_hospital20260321_0015.yaml use_sim_time:=true
+ros2 launch yaseen_differential_robot localization_launch.py map:=$HOME/ws_odrive_robot/maps/hopital/my_map_hospital20260321_0015.yaml use_sim_time:=true
 ```
 
 _Terminal 5: Nav2_
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
 ```
 
 **3B-3) RViz setup required for AMCL/costmaps**  
@@ -312,7 +312,7 @@ ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/w
 
 _Terminal 5 (PC): Nav2 (without AMCL interference)_
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
 ```
 
 _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before sending Nav2 goals.
@@ -351,12 +351,12 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 _Terminal 4 (PC): AMCL localization_
 ```bash
 MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
-ros2 launch nav2_bringup localization_launch.py map:="$MAP" use_sim_time:=false
+ros2 launch yaseen_differential_robot localization_launch.py map:="$MAP" use_sim_time:=false
 ```
 
 _Terminal 5 (PC): Nav2_
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
 ```
 
 **3D-3) RViz setup required for AMCL/costmaps**  
