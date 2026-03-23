@@ -25,6 +25,16 @@ def generate_launch_description():
     #     launch_arguments=[('use_sim_time', 'true'), ('use_stamped', 'true')]
     # )
 
+    # add twist mux
+    twist_mux_params = os.path.join(get_package_share_directory(pkg_share), 'config', 'twist_mux.yaml')
+    twist_mux = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        parameters=[twist_mux_params, {'use_sim_time': True}],
+        remappings=[('/cmd_vel_out', '/yaseen_diffbot_controller/cmd_vel_unstamped')]
+    )
+    
+
     world_arg = DeclareLaunchArgument(
         "world",
         default_value="empty.sdf",
@@ -189,6 +199,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             # joystick,
+            twist_mux,
             world_arg,
             set_gz_resource_path,
             set_ign_resource_path,

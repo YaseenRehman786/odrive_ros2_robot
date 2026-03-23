@@ -1,3 +1,5 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
 from launch.event_handlers import OnProcessExit
@@ -13,6 +15,14 @@ def generate_launch_description():
     # Get the package directory
     #pkg_name = 'yaseen_differential_robot' # package name
     #pkg_share = get_package_share_directory(pkg_name) # get the package share directory
+
+    twist_mux_params = os.path.join(get_package_share_directory('yaseen_differential_robot'), 'config', 'twist_mux.yaml')
+    twist_mux = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        parameters=[twist_mux_params],
+        remappings=[('/cmd_vel_out', '/yaseen_diffbot_controller/cmd_vel_unstamped')]
+    )
 
     # Declare launch argument for hardware type
     use_mock_hardware_arg = DeclareLaunchArgument(
@@ -124,6 +134,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            twist_mux,
             use_mock_hardware_arg,
             use_rviz_arg,
             control_node,
