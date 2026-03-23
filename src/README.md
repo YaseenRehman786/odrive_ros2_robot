@@ -199,10 +199,9 @@ _Terminal 2 (or new): SLAM localization_
 ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
 ```
 
-_Terminal 5: Nav2 with latest saved occupancy map_
+_Terminal 5: Nav2 (without AMCL interference)_
 ```bash
-MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
-ros2 launch nav2_bringup bringup_launch.py map:="$MAP" use_sim_time:=true autostart:=true
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
 ```
 
 _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before sending Nav2 goals.
@@ -272,10 +271,9 @@ _Terminal 4 (PC): SLAM localization_
 ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
 ```
 
-_Terminal 5 (PC): Nav2 with latest saved occupancy map_
+_Terminal 5 (PC): Nav2 (without AMCL interference)_
 ```bash
-MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
-ros2 launch nav2_bringup bringup_launch.py map:="$MAP" use_sim_time:=false autostart:=true
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false
 ```
 
 _Important:_ In RViz, set initial pose once using **2D Pose Estimate** before sending Nav2 goals.
