@@ -42,6 +42,19 @@ def generate_launch_description():
         default_value="true",
         description="Whether to launch the LiDAR node for the RPLIDAR A2M8 LiDAR sensor"
     )
+
+
+    use_realsense_arg = DeclareLaunchArgument(
+        "use_realsense",
+        default_value="true",
+        description="Whether to launch the RealSense node for the D435 depth camera"
+    )
+
+    realsense_align_depth_arg = DeclareLaunchArgument(
+        "realsense_align_depth",
+        default_value="true",
+        description="Whether to align the depth image to the color image for the D435 depth camera"
+    )
     
     lidar_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -50,9 +63,28 @@ def generate_launch_description():
             )
         ),
         condition=IfCondition(LaunchConfiguration("use_lidar"))
-    )   
+    )
 
-
+    realsense_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [FindPackageShare("realsense2_camera"), "launch", "rs_launch.py"]
+            )
+        ),
+        launch_arguments={
+            "camera_namespace": "",
+            "camera_name": "camera",
+            "enable_color": "true",
+            "enable_depth": "true",
+            "enable_infra1": "false",
+            "enable_infra2": "false",
+            "align_depth.enable": LaunchConfiguration("realsense_align_depth"),
+            "pointcloud.enable": "true",
+            "publish_tf": "false",
+            "tf_publish_rate": "0.0",
+        }.items(),
+        condition=IfCondition(LaunchConfiguration("use_realsense")),
+    )
 
     # Process the URDF file with xacro
     robot_description_content = Command(
@@ -144,5 +176,8 @@ def generate_launch_description():
             rviz_node,
             lidar_node,
             use_lidar_arg,
+            use_realsense_arg,
+            realsense_node,
+            realsense_align_depth_arg,
         ]
     )

@@ -19,8 +19,13 @@
   <depend>joint_state_publisher_gui</depend>
   <depend>joint_state_publisher</depend>
   <depend>rviz2</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>twist_mux</depend>
 
   <exec_depend>rplidar_ros</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>realsense2_description</exec_depend>
+  <exec_depend>image_transport_plugins</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

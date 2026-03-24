@@ -41,6 +41,13 @@ def generate_launch_description():
         description="Name of the world file to load (located in yaseen_differential_robot/worlds)",
     )
 
+    use_simulated_realsense_arg = DeclareLaunchArgument(
+        "use_simulated_realsense",
+        default_value="true",
+        description="Enable bridges for simulated RealSense camera topics",
+    )
+
+
     # Set environment variables for Gazebo resource and plugin paths, which is necessary for Gazebo to locate the robot's URDF and SDF files, as well as any custom plugins that are required for the robot to function properly in the Gazebo simulation environment
     world_sdf = PathJoinSubstitution(
         [FindPackageShare("yaseen_differential_robot"), "worlds", LaunchConfiguration("world")]
@@ -188,6 +195,19 @@ def generate_launch_description():
         output="screen",
     )
 
+    simulated_realsense_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            "/camera/camera/color/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/camera/color/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/camera/camera/depth/image_rect_raw@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/camera/depth/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+        ],
+        output="screen",
+        condition=IfCondition(LaunchConfiguration("use_simulated_realsense")),
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -201,6 +221,7 @@ def generate_launch_description():
             # joystick,
             twist_mux,
             world_arg,
+            use_simulated_realsense_arg,
             set_gz_resource_path,
             set_ign_resource_path,
             set_gz_plugin_path,
@@ -212,6 +233,7 @@ def generate_launch_description():
             delay_joint_state_broadcaster,
             delay_diff_drive_controller,
             scan_bridge,
+            simulated_realsense_bridge,
             rviz_node,
         ]
     )
