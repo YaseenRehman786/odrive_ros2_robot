@@ -3,14 +3,16 @@ controller_manager:
     update_rate: 100 #Hz
     use_sim_time: true
 
-    joint_state_broadcaster:
+    joint_state_broadcaster: # this controller is used to publish the state of the joints to ROS2 topics
+    # the joints are defined in the URDF and the controller will publish the state of these joints to the /joint_states topic. This is important for visualization in RViz and for other nodes that need to know the state of the joints.
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    yaseen_diffbot_controller:
+    yaseen_diffbot_controller: # this controller is used to control the robot using a differential drive controller
       type: diff_drive_controller/DiffDriveController
 
 yaseen_diffbot_controller:
   ros__parameters:
+    use_stamped_vel: false
     use_sim_time: true
     left_wheel_names: ["wheel_left_joint"]
     right_wheel_names: ["wheel_right_joint"]

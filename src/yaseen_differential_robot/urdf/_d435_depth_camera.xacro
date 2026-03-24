@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="yaseen_depth_camera"
+               params="parent:=base_link use_nominal_extrinsics:=false add_plug:=false use_mesh:=true">
+
+    <!-- Official RealSense D435 macro from realsense2_description -->
+    <xacro:include filename="$(find yaseen_differential_robot)/urdf/_d435.urdf.xacro"/>
+
+    <xacro:sensor_d435
+      parent="${parent}"
+      name="camera"
+      use_nominal_extrinsics="${use_nominal_extrinsics}"
+      add_plug="${add_plug}"
+      use_mesh="${use_mesh}">
+      <origin xyz="0.225 0.00 -0.06" rpy="0 0 0"/>
+    </xacro:sensor_d435>
+
+  </xacro:macro>
+</robot>
