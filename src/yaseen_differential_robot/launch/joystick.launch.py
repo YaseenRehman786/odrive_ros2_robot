@@ -15,6 +15,7 @@ def generate_launch_description():
     cmd_vel_topic = LaunchConfiguration('cmd_vel_topic', default='/yaseen_diffbot_controller/cmd_vel_unstamped')
     use_stamped = LaunchConfiguration('use_stamped', default='false')
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    require_enable_button = LaunchConfiguration('require_enable_button', default='false')
 
 
     #----------------LAUNCH ARGUMENTS----------------
@@ -36,6 +37,12 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
 
+    require_enable_button_arg = DeclareLaunchArgument(
+        'require_enable_button',
+        default_value='false',
+        description='Require hold-enable button for movement'
+    )
+
     #----------------NODES----------------
     joy_node = Node(
         package='joy',
@@ -47,7 +54,7 @@ def generate_launch_description():
         package='teleop_twist_joy',
         executable='teleop_node',
         name = 'teleop_node',
-        parameters=[joy_params, {'publish_stamped_twist': use_stamped}],
+        parameters=[joy_params, {'publish_stamped_twist': use_stamped}, {'use_sim_time': use_sim_time}, {'require_enable_button': require_enable_button}],
         remappings=[('/cmd_vel', cmd_vel_topic)]
         #remappings=[('/cmd_vel', '/cmd_vel_joy')]
     )
@@ -68,6 +75,7 @@ def generate_launch_description():
         cmd_vel_topic_arg,
         use_stamped_arg,
         use_sim_time_arg,
+        require_enable_button_arg,
         joy_node,
         teleop_node,
         # twist_stamper
