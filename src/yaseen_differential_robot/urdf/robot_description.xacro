@@ -332,5 +332,19 @@
         xyz="0 0 0" />
     </joint>
 
+    <!-- <link name="camera_link"/>
+
+    <joint
+      name="camera_joint"
+      type="fixed">
+      <origin
+        xyz="0.225 0.00 -0.06"
+        rpy="0 0 0" />
+      <parent
+        link="base_link" />
+      <child
+        link="camera_link" />
+    </joint> -->
+
   </xacro:macro>
 </robot>

@@ -6,7 +6,7 @@
 
 ## Quick Navigation
 
-**Last updated**: March 22, 2026
+**Last updated**: March 23, 2026
 
 - [Project Overview](#project-overview)
 - [Package Structure Created](#package-structure-created)
@@ -17,6 +17,7 @@
 - [March 15, 2026 — Gazebo Fortress ↔ Harmonic Switching Playbook](#march-15-2026--gazebo-fortress--harmonic-switching-playbook)
 - [March 19-20, 2026 — Real Robot LiDAR + SLAM + Joystick Integration](#march-19-20-2026--real-robot-lidar--slam--joystick-integration)
 - [March 21–22, 2026 — Continuation Addendum (Merged)](#march-2122-2026--continuation-addendum-merged)
+- [March 23, 2026 — Nav2 Workflow Cleanup + RealSense D435 Integration](#march-23-2026--nav2-workflow-cleanup--realsense-d435-integration)
 
 ---
 
@@ -1235,4 +1236,73 @@ README has been updated to reflect:
 - `3A` full Gazebo end-to-end flow
 - `3B` full real-robot end-to-end flow
 - automatic latest map/posegraph selection commands
+
+---
+
+## March 23, 2026 — Nav2 Workflow Cleanup + RealSense D435 Integration
+
+### A) README workflow corrections and hardening
+
+**What was fixed**
+- Standardized navigation command usage to avoid mixed bringup patterns during active SLAM/localization.
+- Replaced generic `nav2_bringup` command examples with local package launch flows where needed.
+- Added AMCL-specific workflows and clarified when AMCL should be used vs when SLAM localization should be used.
+- Reorganized runbook so **Simulation** and **Real Robot** flows are grouped and not interleaved.
+
+**Result**
+- Faster operator startup with less ambiguity.
+- Reduced risk of running conflicting localization stacks at the same time.
+
+### B) Launch/debug fixes completed
+
+**Critical fix**
+- In `gz_sim.launch.py`, fixed an invalid package/path usage pattern that caused a launch-time package name exception.
+- Root cause: a share-directory path was passed where a package name was expected.
+- Outcome: Gazebo launch path resolution now works reliably.
+
+**Validation**
+- `control.launch.py` was reviewed for syntax and basic runtime sanity.
+- Build and launch status returned success in latest runs.
+
+### C) Intel RealSense D435 on Jetson (JP 6.2 / L4T 36.5)
+
+**Completed setup**
+- Installed/validated librealsense tooling.
+- Camera hardware verified with device enumeration and viewer.
+- Resolved package naming confusion (`realsense2-camera-msgs` vs similarly named variants).
+
+**Compatibility notes captured**
+- JetPack 6.2 / L4T 36.5 native patch-script support is limited in upstream scripts at this time.
+- Source-build wrapper mismatch was diagnosed when wrapper branch expected newer librealsense than installed.
+- Stable path chosen: apt-based wrapper workflow (unless intentionally pinning SDK + wrapper versions together from source).
+
+### D) ROS topic parity and visualization
+
+**What was addressed**
+- Explained and fixed differing RealSense topic sets between machines.
+- Installed image transport plugins on Jetson to align behavior with desktop tooling.
+- Confirmed camera topics and ROS communication pathing were functional.
+
+### E) URDF/Xacro D435 integration (modular + official-pattern aligned)
+
+**Integration approach**
+- Added modular camera include/instantiation flow in robot xacro stack.
+- Kept legacy manual camera block disabled to avoid duplicate frame/joint definitions.
+- Followed official `sensor_d435` macro pattern for maintainability.
+
+**Mesh issue resolved**
+- Fixed D435 mesh URI resolution problem in Gazebo by using package-local mesh pathing for the local camera model.
+- Final launch logs confirmed the previous mesh-not-found errors were gone.
+
+### F) Current verified status (end of session)
+
+- `colcon build --symlink-install`: successful.
+- `ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true`: successful.
+- Gazebo sim starts, robot spawns, ros2_control initializes, and controllers activate.
+- Camera model is included in URDF and simulation runs without blocking D435 mesh errors.
+- Remaining warnings observed are non-blocking (graphics/timing startup warnings).
+
+### G) Recommended next step (optional)
+
+- From this stable baseline, next optional increment is simulated camera sensor publication (if desired), then integration of a `use_realsense` bringup toggle for real-hardware flows.
 

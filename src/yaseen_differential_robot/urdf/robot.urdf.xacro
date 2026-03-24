@@ -7,8 +7,11 @@
   <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_description.xacro"/>
   <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_ros2_control.xacro"/>
   <xacro:include filename="$(find yaseen_differential_robot)/urdf/robot_gazebo.xacro"/>
+  <xacro:include filename="$(find yaseen_differential_robot)/urdf/_d435_depth_camera.xacro"/>
+
   
   <xacro:yaseen_description/>
+  <xacro:yaseen_depth_camera parent="base_link" use_nominal_extrinsics="false" add_plug="false" use_mesh="true"/>
   <xacro:yaseen_ros2_control name="YaseenDiffBot" use_mock_hardware="$(arg use_mock_hardware)" use_gazebo="$(arg use_gazebo)"/>
   
   <xacro:if value="$(arg use_gazebo)">
