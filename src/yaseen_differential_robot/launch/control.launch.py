@@ -166,18 +166,23 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            twist_mux,
+            # Declare args first
             use_mock_hardware_arg,
             use_rviz_arg,
+            use_lidar_arg,
+            use_realsense_arg,
+            realsense_align_depth_arg,
+
+            # Core nodes
+            twist_mux,
             control_node,
             robot_state_pub_node,
             joint_state_broadcaster_spawner,
             delay_robot_controller,
             rviz_node,
+
+            # Optional sensors
             lidar_node,
-            use_lidar_arg,
-            use_realsense_arg,
             realsense_node,
-            realsense_align_depth_arg,
         ]
     )
