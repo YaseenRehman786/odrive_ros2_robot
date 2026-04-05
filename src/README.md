@@ -360,10 +360,22 @@ ros2 launch realsense2_camera rs_launch.py \
 ros2 param set /camera/camera pointcloud__neon_.enable true
 ```
 
+### RViz DepthCloud configuration
+
+In RViz, add a DepthCloud display and set the following:
+
+| Field | Value |
+|---|---|
+| Fixed Frame | `camera_link` |
+| Depth Map Topic | `/camera/camera/aligned_depth_to_color/image_raw` |
+| Color Image Topic | `/camera/camera/color/image_raw` |
+| Color Transport Hint | `compressed` |
+| Reliability Policy | `Best Effort` |
+| Queue Size | `2` |
+
 
 ## Useful references
 
 - ODrive ROS package docs: https://docs.odriverobotics.com/v/latest/guides/ros-package.html
 - Jetson RealSense install notes: https://github.com/meisner91/JetsonNanoOrinScripts/blob/main/03_Install_Intel_RealSense_on_JetPack_6.md
 - Session history and troubleshooting: [SESSION_LOG.md](SESSION_LOG.md)
-
