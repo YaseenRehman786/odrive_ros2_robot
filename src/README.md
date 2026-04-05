@@ -46,15 +46,21 @@ sudo apt install -y \
 	ros-humble-ros-gz \
 	ros-humble-ros-gz-sim \
 	ros-humble-ros-gz-bridge
-```
 
-### Resolve dependencies and build
-
-```bash
+# Resolve dependencies and build
 cd ~/ws_odrive_robot
 source /opt/ros/humble/setup.bash
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
+source ~/ws_odrive_robot/install/setup.bash
+```
+
+### Source and Build
+
+```bash
+cd ~/ws_odrive_robot
+colcon build --symlink-install
+source /opt/ros/$ROS_DISTRO/setup.bash
 source ~/ws_odrive_robot/install/setup.bash
 ```
 
