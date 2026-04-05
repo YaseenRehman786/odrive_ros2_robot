@@ -231,7 +231,16 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false m
 
 ## Intel RealSense
 
-### Official launch first
+### PC visualization workflow
+
+```bash
+ros2 daemon stop && ros2 daemon start
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file:///home/$USER/cyclonedds.xml
+rviz2
+```
+
+### Official launch
 
 Use the official `realsense2_camera` launch for the real camera:
 
@@ -243,60 +252,12 @@ ros2 launch realsense2_camera rs_launch.py \
 	enable_sync:=true
 ```
 
-### Other tested launch variants
-
+### Enable Point Cloud
 ```bash
-ros2 run realsense2_camera realsense2_camera_node
-ros2 run realsense2_camera realsense2_camera_node --ros-args -p enable_color:=false -p spatial_filter.enable:=true -p temporal_filter.enable:=true
-ros2 launch realsense2_camera rs_launch.py
-ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true
-ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=648x480x15 pointcloud.enable:=true
-ros2 launch realsense2_camera rs_launch.py \
-	depth_module.depth_profile:=640x480x15 \
-	rgb_camera.color_profile:=640x480x15 \
-	enable_infra1:=false enable_infra2:=false \
-	pointcloud.enable:=false
-ros2 launch realsense2_camera rs_launch.py \
-	depth_module.depth_profile:=848x480x30 \
-	rgb_camera.color_profile:=640x480x15 \
-	pointcloud.enable:=true \
-	decimation_filter.enable:=true
-ros2 launch realsense2_camera rs_launch.py \
-	pointcloud__neon_.enable:=true \
-	decimation_filter.enable:=true \
-	decimation_filter.filter_magnitude:=4 \
-	depth_module.depth_profile:=424x240x15 \
-	rgb_camera.color_profile:=424x240x15
+#after launching in new terminal set point cloud to true
 ros2 param set /camera/camera pointcloud__neon_.enable true
 ```
 
-### PC visualization workflow
-
-```bash
-ros2 daemon stop && ros2 daemon start
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI=file:///home/$USER/cyclonedds.xml
-rviz2
-```
-
-If Wi-Fi is overloaded, use a lower-bandwidth no-pointcloud test:
-
-```bash
-ros2 launch realsense2_camera rs_launch.py \
-	align_depth.enable:=true \
-	rgb_camera.color_profile:=424x240x10 \
-	depth_module.depth_profile:=424x240x10
-```
-
-### Static transform example
-
-```bash
-ros2 run tf2_ros static_transform_publisher 0.20 0.00 0.18 0 0 0 base_link camera_link
-```
-
-This places the camera 20 cm forward and 18 cm up from `base_link`.
-
----
 
 ## Useful references
 
