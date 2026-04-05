@@ -19,7 +19,7 @@ The README is organized as a reference manual. Detailed session history and expe
 
 ---
 
-## General Setup
+## 🔧 General Setup
 
 ### Install dependencies
 
@@ -103,7 +103,7 @@ ssh yaseenjetson@192.168.0.133
 
 ---
 
-## ODrive and Motors
+## ⚡ ODrive and Motors
 
 Reference: https://docs.odriverobotics.com/v/latest/guides/ros-package.html
 
@@ -180,7 +180,7 @@ ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/
 
 ---
 
-## SLAM & Nav2
+## 🗺️ SLAM & Nav2
 
 ### What each tool does
 
@@ -324,7 +324,7 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false m
 
 ---
 
-## Intel RealSense
+## 📷 Intel RealSense
 
 ### PC visualization workflow
 
@@ -374,7 +374,7 @@ In RViz, add a DepthCloud display and set the following:
 | Queue Size | `2` |
 
 
-## Useful references
+## 📚 Useful references
 
 - ODrive ROS package docs: https://docs.odriverobotics.com/v/latest/guides/ros-package.html
 - Jetson RealSense install notes: https://github.com/meisner91/JetsonNanoOrinScripts/blob/main/03_Install_Intel_RealSense_on_JetPack_6.md
