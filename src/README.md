@@ -24,7 +24,10 @@ The README is organized as a reference manual. Detailed session history and expe
 ### Install dependencies
 
 ```bash
+# update apt index
 sudo apt update
+
+# install ROS 2 dependencies
 sudo apt install -y \
 	ros-humble-ros2-control \
 	ros-humble-ros2-controllers \
@@ -48,33 +51,47 @@ sudo apt install -y \
 	ros-humble-ros-gz-bridge
 
 # Resolve dependencies and build
+# go to workspace
 cd ~/ws_odrive_robot
+# source ROS 2 environment
 source /opt/ros/humble/setup.bash
+# install package dependencies from source tree
 rosdep install --from-paths src --ignore-src -r -y
+# build workspace
 colcon build --symlink-install
+# source local workspace overlay
 source ~/ws_odrive_robot/install/setup.bash
 ```
 
 ### Source and Build
 
 ```bash
+# go to workspace
 cd ~/ws_odrive_robot
+# build workspace
 colcon build --symlink-install
+# source base ROS distro
 source /opt/ros/$ROS_DISTRO/setup.bash
+# source local workspace overlay
 source ~/ws_odrive_robot/install/setup.bash
 ```
 
 ### CAN bringup
 
 ```bash
+# load CAN kernel modules
 sudo modprobe can
 sudo modprobe can_raw
 sudo modprobe gs_usb
 
+# reset interface
 sudo ip link set can0 down 2>/dev/null
+# set bitrate
 sudo ip link set can0 type can bitrate 1000000
+# bring interface up
 sudo ip link set can0 up
 
+# inspect interface status and counters
 ip -details link show can0
 ```
 
@@ -95,10 +112,19 @@ Reference: https://docs.odriverobotics.com/v/latest/guides/ros-package.html
 Use this only to verify the CAN node and axis commands are working.
 
 ```bash
+# launch ODrive CAN node
 ros2 launch odrive_can example_launch.yaml
+
+# request closed loop control for axis 0
 ros2 service call /odrive_axis0/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
+
+# request closed loop control for axis 1
 ros2 service call /odrive_axis1/request_axis_state odrive_can/srv/AxisState "{axis_requested_state: 8}"
+
+# publish velocity command to axis 0
 ros2 topic pub /odrive_axis0/control_message odrive_can/msg/ControlMessage "{control_mode: 2, input_mode: 1, input_pos: 0.0, input_vel: 1.0, input_torque: 0.0}"
+
+# publish velocity command to axis 1
 ros2 topic pub /odrive_axis1/control_message odrive_can/msg/ControlMessage "{control_mode: 2, input_mode: 1, input_pos: 0.0, input_vel: 1.0, input_torque: 0.0}"
 ```
 
@@ -115,9 +141,16 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
 PC tools:
 
 ```bash
+# launch RViz with odom profile
 rviz2 -d ~/ws_odrive_robot/src/yaseen_differential_robot/rviz/view_robot_odom.rviz
+
+# start twist_mux and remap output to controller cmd_vel
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# keyboard teleop direct to controller cmd_vel
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# joystick launch (unstamped)
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_diffbot_controller/cmd_vel_unstamped use_stamped:=false use_sim_time:=false
 ```
 
@@ -125,13 +158,23 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/yaseen_
 
 ```bash
 # Optional cleanup if Gazebo gets stuck
+# kill ruby process
 pkill -9 ruby
+# kill legacy ign processes
 pkill -9 ign
+# kill gz processes
 pkill -9 gz
 
+# launch Gazebo simulation
 ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
+
+# keyboard teleop for sim controller
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=false -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# joystick to /cmd_vel_joy for mux arbitration
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
+
+# start twist_mux and route to controller cmd_vel
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
@@ -160,8 +203,13 @@ Before sending navigation goals:
 Useful checks:
 
 ```bash
+# verify required nodes are alive
 ros2 node list | grep -E "slam_toolbox|amcl|bt_navigator|controller_server|planner_server|twist_mux"
+
+# verify simulation clock is publishing
 ros2 topic hz /clock
+
+# check nav cmd_vel output
 ros2 topic echo /cmd_vel --once
 ```
 
@@ -170,19 +218,33 @@ ros2 topic echo /cmd_vel --once
 #### 1. Map creation
 
 ```bash
+# launch Gazebo sim
 ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
+
+# start twist_mux
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# launch joystick
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
+
+# start SLAM mapping
 ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
 ```
 
 Save the map and posegraph:
 
 ```bash
+# create timestamp for this mapping session
 stamp=$(date +%Y%m%d_%H%M)
+
+# create output directory
 session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
 mkdir -p "$session_dir"
+
+# save occupancy map (yaml + pgm)
 ros2 run nav2_map_server map_saver_cli -f "$session_dir/map"
+
+# save SLAM posegraph
 ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$session_dir/posegraph'}"
 ```
 
@@ -191,17 +253,29 @@ ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGrap
 Update `slam_localization.yaml` so `map_file_name` points to the latest posegraph base path, then launch:
 
 ```bash
+# launch SLAM localization using saved posegraph
 ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
+
+# launch Nav2 stack
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true
 ```
 
 #### 3. AMCL + Nav2
 
 ```bash
+# launch Gazebo sim
 ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
+
+# start twist_mux
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# launch joystick
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+
+# launch AMCL localization
 ros2 launch yaseen_differential_robot localization_launch.py map:=$HOME/ws_odrive_robot/maps/hopital/my_map_hospital20260321_0015.yaml use_sim_time:=true
+
+# launch Nav2 with transient local map subscribe
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
 ```
 
@@ -210,9 +284,16 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true ma
 #### 1. Map creation
 
 ```bash
+# launch robot control stack on hardware
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+
+# start twist_mux
 ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# launch joystick
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+
+# start SLAM mapping on real robot
 ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
 ```
 
@@ -221,15 +302,23 @@ Save the map and posegraph with the same commands as simulation.
 #### 2. SLAM localization + Nav2
 
 ```bash
+# launch SLAM localization using saved posegraph
 ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+
+# launch Nav2 stack
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
 ```
 
 #### 3. AMCL + Nav2
 
 ```bash
+# find latest saved map.yaml
 MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+
+# launch AMCL with latest map
 ros2 launch yaseen_differential_robot localization_launch.py map:="$MAP" use_sim_time:=false
+
+# launch Nav2 with transient local map subscribe
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
 ```
 
@@ -240,9 +329,16 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false m
 ### PC visualization workflow
 
 ```bash
+# restart ROS daemon
 ros2 daemon stop && ros2 daemon start
+
+# select CycloneDDS RMW
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# point DDS to local config
 export CYCLONEDDS_URI=file:///home/$USER/cyclonedds.xml
+
+# start RViz
 rviz2
 ```
 
