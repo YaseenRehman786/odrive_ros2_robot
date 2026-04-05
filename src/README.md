@@ -26,10 +26,8 @@ sudo apt install -y \
 	ros-humble-ros-gz \
 	ros-humble-ros-gz-sim \
 	ros-humble-ros-gz-bridge
-```
 
-**2) Resolve and build workspace**
-```bash
+# Resolve and build workspace
 cd ~/ws_odrive_robot
 source /opt/ros/humble/setup.bash
 rosdep install --from-paths src --ignore-src -r -y
@@ -96,6 +94,11 @@ ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false
 _RVIZ2 (on PC)_
 ```bash
 rviz2 -d ~/ws_odrive_robot/src/yaseen_differential_robot/rviz/view_robot_odom.rviz
+```
+
+_twist_mux (on PC)_
+```bash
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
 ```
 
 _Teleoperation (on PC)_

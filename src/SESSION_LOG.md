@@ -6,7 +6,7 @@
 
 ## Quick Navigation
 
-**Last updated**: March 23, 2026
+**Last updated**: April 5, 2026
 
 - [Project Overview](#project-overview)
 - [Package Structure Created](#package-structure-created)
@@ -18,6 +18,7 @@
 - [March 19-20, 2026 — Real Robot LiDAR + SLAM + Joystick Integration](#march-19-20-2026--real-robot-lidar--slam--joystick-integration)
 - [March 21–22, 2026 — Continuation Addendum (Merged)](#march-2122-2026--continuation-addendum-merged)
 - [March 23, 2026 — Nav2 Workflow Cleanup + RealSense D435 Integration](#march-23-2026--nav2-workflow-cleanup--realsense-d435-integration)
+- [April 5, 2026 — RealSense Stabilization + CAN Bus Debugging Handoff](#april-5-2026--realsense-stabilization--can-bus-debugging-handoff)
 
 ---
 
@@ -1305,4 +1306,177 @@ README has been updated to reflect:
 ### G) Recommended next step (optional)
 
 - From this stable baseline, next optional increment is simulated camera sensor publication (if desired), then integration of a `use_realsense` bringup toggle for real-hardware flows.
+
+---
+
+## April 5, 2026 — RealSense Stabilization + CAN Bus Debugging Handoff
+
+### A) Updated project direction
+
+The camera work has moved from custom wrapper launch experimentation to the official `realsense2_camera` bringup flow for real hardware. The preferred path is now:
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  align_depth.enable:=true \
+  rgb_camera.color_profile:=424x240x5 \
+  depth_module.depth_profile:=424x240x5 \
+  enable_sync:=true
+```
+
+### B) Key RealSense findings
+
+- The custom camera launch was failing because `320x240x6` was not a valid depth profile and caused fallback / sensor reset behavior.
+- The official `rs_launch.py` works correctly with the camera hardware.
+- A lower-rate configuration can start successfully, but sustained operation is still limited by system load / stability.
+- The camera stack is now understood to be a launch-parameter compatibility issue rather than a hardware connection issue.
+
+### C) Current codebase status
+
+- `package.xml` is acceptable as-is for the robot package.
+- `robot_gazebo.xacro` is still valid for simulation-only camera visualization.
+- `robot_description.xacro` and `robot.urdf.xacro` are still compatible with the modular D435 include approach.
+- No immediate URDF cleanup is required just to use the official RealSense launch for the real robot.
+
+### D) CAN bus / ODrive status
+
+The highest-priority remaining issue is now the CAN failure during motor movement.
+
+Observed symptom:
+- Robot bringup succeeds.
+- CAN communication crashes when the motors begin to move.
+- TF / visualization freezes afterward.
+
+### E) Immediate next diagnostics
+
+1. Check CAN state and counters right after a failure:
+
+```bash
+ip -details -statistics link show can0
+```
+
+2. Retry CAN bringup with a larger transmit queue:
+
+```bash
+sudo ip link set can0 down
+sudo ip link set can0 up type can bitrate 250000
+sudo ip link set can0 txqueuelen 1000
+```
+
+3. Verify ground continuity between the CAN adapter and ODrive logic GND.
+
+4. Check for silent USB / controller disconnects:
+
+```bash
+dmesg | tail -n 20
+```
+
+### F) Recommended next assistant action
+
+- Focus on the CAN bus crash first.
+- Treat the RealSense path as mostly resolved by the official launch file.
+- Preserve the simulation xacro setup unless a later cleanup task requires it.
+
+### G) Additional camera notes to preserve
+
+#### RealSense launch variants that were tested
+
+```bash
+ros2 run realsense2_camera realsense2_camera_node
+
+# Example with filters enabled
+ros2 run realsense2_camera realsense2_camera_node --ros-args \
+  -p enable_color:=false \
+  -p spatial_filter.enable:=true \
+  -p temporal_filter.enable:=true
+
+ros2 launch realsense2_camera rs_launch.py
+
+ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true
+
+ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=648x480x15 pointcloud.enable:=true
+
+ros2 launch realsense2_camera rs_launch.py \
+  depth_module.depth_profile:=640x480x15 \
+  rgb_camera.color_profile:=640x480x15 \
+  enable_infra1:=false enable_infra2:=false \
+  pointcloud.enable:=false
+
+ros2 launch realsense2_camera rs_launch.py \
+  depth_module.depth_profile:=848x480x30 \
+  rgb_camera.color_profile:=640x480x15 \
+  pointcloud.enable:=true \
+  decimation_filter.enable:=true
+
+ros2 launch realsense2_camera rs_launch.py \
+  pointcloud__neon_.enable:=true \
+  decimation_filter.enable:=true \
+  rgb_camera.color_profile:=640x480x15 \
+  depth_module.depth_profile:=848x480x15
+
+ros2 launch realsense2_camera rs_launch.py \
+  decimation_filter.enable:=true \
+  rgb_camera.color_profile:=640x480x15 \
+  depth_module.depth_profile:=848x480x15
+
+ros2 param set /camera/camera pointcloud__neon_.enable true
+
+```
+
+### Jetson working configuration
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  pointcloud__neon_.enable:=true \
+  decimation_filter.enable:=true \
+  decimation_filter.filter_magnitude:=4 \
+  depth_module.depth_profile:=424x240x15 \
+  rgb_camera.color_profile:=424x240x15
+```
+
+This was marked as working on the Jetson.
+
+#### Static transform publisher examples
+
+```bash
+ros2 run tf2_ros static_transform_publisher x y z roll pitch yaw parent child
+
+ros2 run tf2_ros static_transform_publisher 0.20 0.00 0.18 0 0 0 base_link camera_link
+
+ros2 run tf2_ros static_transform_publisher 0.225 0.00 -0.06 0 0 0 base_link camera_link
+```
+
+Notes:
+- x = 20 cm forward
+- y = 0 centered left/right
+- z = 0.18 m up
+
+#### PC RViz workflow that worked
+
+```bash
+ros2 daemon stop && ros2 daemon start
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file:///home/$USER/cyclonedds.xml
+rviz2
+```
+
+This was confirmed as working on the base PC.
+
+#### Additional network and clock sync reminders
+
+```bash
+sudo chronyc -a makestep
+sudo ufw disable
+ros2 daemon stop && ros2 daemon start
+```
+
+#### Low-bandwidth test setup without pointcloud
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  align_depth.enable:=true \
+  rgb_camera.color_profile:=424x240x10 \
+  depth_module.depth_profile:=424x240x10
+```
+
+This was kept as a no-pointcloud fallback for slow Wi-Fi testing.
 
