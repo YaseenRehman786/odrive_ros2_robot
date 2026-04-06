@@ -95,10 +95,18 @@ sudo ip link set can0 up
 ip -details link show can0
 ```
 
-### SSH to the Jetson
+### Connecting to the Jetson
 
 ```bash
+# SSH into the Jetson 
 ssh yaseenjetson@192.168.0.133
+
+# NoMachine into the Jetson
+
+# Stop Linux display manager
+sudo systemctl stop display-manager
+# Restart NoMachine to create virtual display
+sudo /etc/NX/nxserver --restart
 ```
 
 ---
