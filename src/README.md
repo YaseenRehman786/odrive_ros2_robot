@@ -108,6 +108,15 @@ sudo systemctl stop display-manager
 sudo /etc/NX/nxserver --restart
 ```
 
+### Monitor Computer Temps
+
+```bash
+watch -n 1 'sensors; echo ""; nvidia-smi'
+
+# or use psensor
+psensor
+```
+
 ---
 
 ## ⚡ ODrive and Motors
@@ -355,13 +364,22 @@ Use the official `realsense2_camera` launch for the real camera:
 
 ```bash
 ros2 launch realsense2_camera rs_launch.py \
-	align_depth.enable:=true \
-	rgb_camera.color_profile:=424x240x5 \
-	depth_module.depth_profile:=424x240x5 \
-	enable_sync:=true
+    align_depth.enable:=true \
+    enable_sync:=true
+```
+
+### Lower Compute launch
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+    align_depth.enable:=true \
+    enable_sync:=true \
+    depth_module.depth_profile:=640x360x15 \
+    rgb_camera.color_profile:=640x360x15
 ```
 
 ### Enable Point Cloud
+
 ```bash
 #after launching in new terminal set point cloud to true
 ros2 param set /camera/camera pointcloud__neon_.enable true
@@ -374,11 +392,10 @@ In RViz, add a DepthCloud display and set the following:
 | Field | Value |
 |---|---|
 | Fixed Frame | `camera_link` |
-| Depth Map Topic | `/camera/camera/aligned_depth_to_color/image_raw` |
-| Color Image Topic | `/camera/camera/color/image_raw` |
-| Color Transport Hint | `compressed` |
+| Topic | `/camera/camera/depth/color/points` |
 | Reliability Policy | `Best Effort` |
-| Queue Size | `2` |
+| History Policy | `Keep Last` |
+| Durability Policy | `Volatile` |
 
 
 ## 📚 Useful references
