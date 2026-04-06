@@ -102,7 +102,6 @@ ip -details link show can0
 ssh yaseenjetson@192.168.0.133
 
 # NoMachine into the Jetson
-
 # Stop Linux display manager
 sudo systemctl stop display-manager
 # Restart NoMachine to create virtual display
