@@ -291,8 +291,8 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 # launch AMCL localization
 ros2 launch yaseen_differential_robot localization_launch.py map:=$HOME/ws_odrive_robot/maps/hopital/my_map_hospital20260321_0015.yaml use_sim_time:=true
 
-# launch Nav2 with transient local map subscribe
-ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
+# launch Nav2 stack
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true
 ```
 
 ### Real robot
@@ -331,11 +331,20 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
 # find latest saved map.yaml
 MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
 
+# launch robot control stack on hardware first
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+
+# start twist_mux
+ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/yaseen_differential_robot/config/twist_mux.yaml -r cmd_vel_out:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# launch joystick
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
+
 # launch AMCL with latest map
 ros2 launch yaseen_differential_robot localization_launch.py map:="$MAP" use_sim_time:=false
 
-# launch Nav2 with transient local map subscribe
-ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
+# launch Nav2 stack
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
 ```
 
 ---
