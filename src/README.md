@@ -322,7 +322,7 @@ Save the map and posegraph with the same commands as simulation.
 ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
 
 # launch Nav2 stack
-ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
 ```
 
 #### 3. AMCL + Nav2
@@ -344,7 +344,8 @@ ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel
 ros2 launch yaseen_differential_robot localization_launch.py map:="$MAP" use_sim_time:=false
 
 # launch Nav2 stack
-ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false
+ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
+
 ```
 
 ---
