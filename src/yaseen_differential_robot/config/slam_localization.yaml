@@ -20,8 +20,8 @@ slam_toolbox:
     # if you'd like to immediately start continuing a map at a given pose
     # or at the dock, but they are mutually exclusive, if pose is given
     # will use pose
-    map_file_name: /home/ysn786/ws_odrive_robot/maps/20260323_1358/posegraph
-    #/home/ysn786/ws_odrive_robot/maps/hopital/my_posegraph_hospital20260321_0020
+    map_file_name: ""
+    # Set this at launch time via posegraph_file:=/absolute/path/to/posegraph
     
 
     # map_start_pose: [0.0, 0.0, 0.0]

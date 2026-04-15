@@ -1480,3 +1480,128 @@ ros2 launch realsense2_camera rs_launch.py \
 
 This was kept as a no-pointcloud fallback for slow Wi-Fi testing.
 
+---
+
+## April 15, 2026 — New Computer Bring-Up + Gazebo Mesh Path Portability Fix
+
+### Summary
+
+Brought `ws_odrive_robot` up on a fresh computer install and resolved a multi-stage bring-up chain that initially looked like a Gazebo/Ogre rendering failure. The final root cause for missing robot visuals in Gazebo was a hardcoded old-machine resource path inside the launch file.
+
+### A) Initial `colcon build` failure
+
+**Symptom**
+- Build failed early with missing `ament_cmake`.
+
+**Root cause**
+- ROS 2 environment was not sourced in the new terminal/session.
+
+**Fix**
+- Sourced ROS 2 Humble:
+  ```bash
+  source /opt/ros/humble/setup.bash
+  ```
+- Re-ran build after confirming ROS distro visibility.
+
+### B) Git branch recovery after clone
+
+**Symptom**
+- Only `main` appeared locally after cloning.
+
+**Root cause**
+- Remote branches existed, but local tracking branches were not created yet.
+
+**Fix**
+- Synced and checked out needed branches:
+  ```bash
+  git fetch --all
+  git branch -a
+  git switch <branch-name>
+  ```
+
+### C) `rplidar_ros` ROS1/ROS2 mismatch
+
+**Symptom**
+- Build failed in `rplidar_ros` with ROS 1 style dependency errors (`find_package(catkin REQUIRED)`).
+
+**Root cause**
+- Wrong branch was cloned (ROS 1 branch in ROS 2 workspace).
+
+**Fix**
+- Removed incorrect clone and re-cloned ROS 2 branch.
+- Verified package used `ament_cmake` (not `catkin`).
+
+### D) Missing RealSense description dependency
+
+**Symptom**
+- Launch/xacro failure: `package 'realsense2_description' not found`.
+
+**Root cause**
+- New machine did not have the RealSense description package required by the D435 xacro include path.
+
+**Fix**
+- Installed dependency:
+  ```bash
+  sudo apt install ros-humble-realsense2-description
+  ```
+- Rebuilt and re-sourced workspace.
+
+### E) `gz_ros2_control` plugin concern (validated)
+
+**Observed initially**
+- Launch logs included plugin load failures for `libgz_ros2_control-system.so`.
+
+**Validation performed**
+- Confirmed package presence (`ros2 pkg prefix gz_ros2_control`).
+- Checked plugin references in source/install and environment.
+- After cleanup/rebuild, plugin/controller startup worked.
+
+**Conclusion**
+- Plugin was not the persistent root cause after environment correction.
+
+### F) Stale runtime behavior vs correct xacro/install state
+
+**Verified true**
+- Xacro output used correct mesh URIs:
+  - `package://yaseen_differential_robot/meshes/...`
+- Install rules already included `urdf`, `meshes`, `launch`, `config`, `rviz`, `worlds`.
+- Mesh files existed in both source and install tree.
+
+**Still failing at runtime**
+- Gazebo reported unresolved `model://yaseen_differential_robot/meshes/...`.
+
+This indicated mesh files were present, but runtime resource lookup was being directed incorrectly.
+
+### G) Final root cause and fix (Gazebo mesh resolution)
+
+**Root cause**
+- `gz_sim.launch.py` was overriding `GZ_SIM_RESOURCE_PATH` / `IGN_GAZEBO_RESOURCE_PATH` via `SetEnvironmentVariable(...)`.
+- Those values still contained a hardcoded absolute path from the previous machine/user.
+
+**Why manual export did not hold**
+- The launch file override replaced shell-exported values at runtime.
+
+**Final fix**
+- Updated `gz_sim.launch.py` to remove old-machine hardcoded paths.
+- Replaced with dynamic package/share-based path generation using package lookup.
+
+**Result**
+- Gazebo resource resolution is now portable across computers/users.
+- Ogre mesh errors were confirmed as downstream symptoms of bad resource path resolution, not the primary defect.
+
+### H) Additional portability cleanup completed
+
+- Removed hardcoded old-machine posegraph path from `config/slam_localization.yaml`.
+- Added `launch/slam_localization.launch.py` to pass `posegraph_file` at launch time rather than storing user-specific absolute paths in YAML.
+
+### Final conclusion
+
+The new-computer bring-up issue chain was:
+1. Missing ROS 2 environment sourcing
+2. Wrong `rplidar_ros` branch (ROS 1 in ROS 2 workspace)
+3. Missing `realsense2_description`
+4. Stale/overridden Gazebo resource-path behavior
+5. Hardcoded old workspace path in `gz_sim.launch.py`
+
+Once all of the above were corrected, simulation startup, controller loading, and mesh rendering behavior returned to expected operation.
+

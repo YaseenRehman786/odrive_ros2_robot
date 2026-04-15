@@ -48,7 +48,9 @@ sudo apt install -y \
 	ros-humble-teleop-twist-keyboard \
 	ros-humble-ros-gz \
 	ros-humble-ros-gz-sim \
-	ros-humble-ros-gz-bridge
+	ros-humble-ros-gz-bridge \
+	ros-humble-gz-ros2-control \
+	ros-humble-realsense2-description
 
 # Resolve dependencies and build
 # go to workspace
@@ -244,7 +246,7 @@ ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
 
 # start SLAM mapping
-ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
+ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=true
 ```
 
 Save the map and posegraph:
@@ -254,7 +256,7 @@ Save the map and posegraph:
 stamp=$(date +%Y%m%d_%H%M)
 
 # create output directory
-session_dir="/home/ysn786/ws_odrive_robot/maps/${stamp}"
+session_dir="$HOME/ws_odrive_robot/maps/${stamp}"
 mkdir -p "$session_dir"
 
 # save occupancy map (yaml + pgm)
@@ -266,11 +268,14 @@ ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGrap
 
 #### 2. SLAM localization + Nav2
 
-Update `slam_localization.yaml` so `map_file_name` points to the latest posegraph base path, then launch:
+Use the package launcher and pass the posegraph path at runtime (no YAML editing needed):
 
 ```bash
+# optional: find latest saved posegraph
+POSEGRAPH=$(find $HOME/ws_odrive_robot/maps -type f -name "posegraph.data" -printf '%T@ %h\n' | sort -nr | head -1 | cut -d' ' -f2-)/posegraph
+
 # launch SLAM localization using saved posegraph
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=true
+ros2 launch yaseen_differential_robot slam_localization.launch.py use_sim_time:=true posegraph_file:="$POSEGRAPH"
 
 # launch Nav2 stack
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=true
@@ -310,7 +315,7 @@ ros2 run twist_mux twist_mux --ros-args --params-file $HOME/ws_odrive_robot/src/
 ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=false
 
 # start SLAM mapping on real robot
-ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
+ros2 launch yaseen_differential_robot online_async_launch.py slam_params_file:=$HOME/ws_odrive_robot/src/yaseen_differential_robot/config/slam_mapping.yaml use_sim_time:=false
 ```
 
 Save the map and posegraph with the same commands as simulation.
@@ -318,8 +323,11 @@ Save the map and posegraph with the same commands as simulation.
 #### 2. SLAM localization + Nav2
 
 ```bash
+# optional: find latest saved posegraph
+POSEGRAPH=$(find $HOME/ws_odrive_robot/maps -type f -name "posegraph.data" -printf '%T@ %h\n' | sort -nr | head -1 | cut -d' ' -f2-)/posegraph
+
 # launch SLAM localization using saved posegraph
-ros2 launch slam_toolbox localization_launch.py slam_params_file:=/home/ysn786/ws_odrive_robot/src/yaseen_differential_robot/config/slam_localization.yaml use_sim_time:=false
+ros2 launch yaseen_differential_robot slam_localization.launch.py use_sim_time:=false posegraph_file:="$POSEGRAPH"
 
 # launch Nav2 stack
 ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false map_subscribe_transient_local:=true
@@ -329,7 +337,7 @@ ros2 launch yaseen_differential_robot navigation_launch.py use_sim_time:=false m
 
 ```bash
 # find latest saved map.yaml
-MAP=$(find /home/ysn786/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+MAP=$(find $HOME/ws_odrive_robot/maps -type f -name "map.yaml" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
 
 # launch robot control stack on hardware first
 ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false

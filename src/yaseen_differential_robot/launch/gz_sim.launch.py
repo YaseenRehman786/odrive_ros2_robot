@@ -14,6 +14,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("yaseen_differential_robot")
+    pkg_share_parent = os.path.dirname(pkg_share)
     temp_urdf = "/tmp/yaseen_full.urdf"
     temp_sdf = "/tmp/yaseen_full.sdf"
 
@@ -69,11 +70,11 @@ def generate_launch_description():
 
     set_gz_resource_path = SetEnvironmentVariable(
         name="GZ_SIM_RESOURCE_PATH",
-        value="/home/ysn786/ws_odrive_robot/install/yaseen_differential_robot/share",
+        value=f"{pkg_share_parent}{os.pathsep}{pkg_share}",
     )
     set_ign_resource_path = SetEnvironmentVariable(
         name="IGN_GAZEBO_RESOURCE_PATH",
-        value="/home/ysn786/ws_odrive_robot/install/yaseen_differential_robot/share",
+        value=f"{pkg_share_parent}{os.pathsep}{pkg_share}",
     )
     set_gz_plugin_path = SetEnvironmentVariable(
         name="GZ_SIM_SYSTEM_PLUGIN_PATH",
