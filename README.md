@@ -110,19 +110,22 @@ git submodule update --init --recursive
 ```
 
 **8. Update rebotarm_ros2 (Custom Branch)**  
-For arm package changes, work on `yaseen-arm-integration` branch only.
+Work on `yaseen-arm-integration` branch. Push to origin to sync across computers.
 ```bash
 cd ~/ws_odrive_robot/src/rebotarm_ros2
 git add .
 git commit -m "Custom: [Description]"
-# Changes stay local on your custom branch
+git push origin yaseen-arm-integration
 ```
 
 **9. Pull Latest Arm Updates from Seeed (Upstream)**  
-Merge official updates without losing your changes.
+Merge official updates without losing your custom changes.
 ```bash
 cd ~/ws_odrive_robot/src/rebotarm_ros2
 git fetch upstream
 git merge upstream/main
-# Resolve any conflicts, then: git add . && git commit -m "Merged upstream"
+git push origin yaseen-arm-integration
+# If conflicts: edit files, git add ., git commit, then push
 ```
+
+See **REBOTARM_WORKFLOW.md** for full arm integration workflow.
