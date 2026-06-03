@@ -1605,3 +1605,184 @@ The new-computer bring-up issue chain was:
 
 Once all of the above were corrected, simulation startup, controller loading, and mesh rendering behavior returned to expected operation.
 
+---
+
+## June 2, 2026 — reBot Arm B601-DM ROS2 Integration Repository Setup
+
+### Project Overview
+
+Adding a 6-DOF robotic arm (reBot Arm B601-DM + Gripper) to the existing differential robot platform. Integrating via ROS2 with standard interfaces for joint control, IK, trajectory execution, and gravity compensation.
+
+**Hardware**
+- reBot Arm B601-DM (6-DOF + Gripper)
+- DAMIAO motor version
+- USB2CAN serial bridge for CAN communication
+- Default serial port: `/dev/ttyACM0`
+
+**Software Requirements**
+- Ubuntu 24.04 + ROS2 Jazzy (recommended) or Ubuntu 22.04 + ROS2 Humble
+- Python 3.12 (Jazzy) or 3.10 (Humble)
+
+### Repository Selection Rationale
+
+**Chose**: Development repository (`EclipseaHime017/reBotArmController_ROS2`)
+
+**Why**
+- Access to latest fixes and improvements
+- More frequent updates than official Seeed repo
+- Fallback option: can pull from upstream (Seeed-Projects) if needed
+
+**Risk mitigation**
+- Used custom branch to isolate personal modifications
+- Added upstream remote for safe future updates
+
+### Setup Completed (June 2, 2026)
+
+**Step 1-2: Repository Clone**
+```bash
+cd /home/ysn786/ws_odrive_robot/src
+git clone https://github.com/EclipseaHime017/reBotArmController_ROS2.git rebotarm_ros2
+cd rebotarm_ros2
+```
+
+**Step 3: Custom Branch Creation**
+```bash
+git checkout -b yaseen-arm-integration
+# Switched to new branch 'yaseen-arm-integration'
+```
+
+**Step 4: Upstream Remote Configuration**
+```bash
+git remote add upstream https://github.com/Seeed-Projects/reBotArmController_ROS2.git
+git remote -v
+# origin  https://github.com/EclipseaHime017/reBotArmController_ROS2.git (fetch)
+# origin  https://github.com/EclipseaHime017/reBotArmController_ROS2.git (push)
+# upstream        https://github.com/Seeed-Projects/reBotArmController_ROS2.git (fetch)
+# upstream        https://github.com/Seeed-Projects/reBotArmController_ROS2.git (push)
+```
+
+**Step 5: Fetch Upstream History**
+```bash
+git fetch upstream
+# From https://github.com/Seeed-Projects/reBotArmController_ROS2
+#  * [new branch]      main       -> upstream/main
+```
+
+**Status**: ✅ All steps verified and complete
+
+### Git Strategy Explained
+
+- **origin**: development repo (main working copy)
+- **upstream**: official Seeed repo (reference for updates)
+- **yaseen-arm-integration branch**: all custom work stays here
+  - Safe to pull `upstream/main` later without losing changes
+  - Can compare/merge official fixes as needed
+  - Personal modifications never affect origin's main branch
+
+### Next Steps
+
+1. **Install ROS2 dependencies**:
+   ```bash
+   source /opt/ros/jazzy/setup.bash
+   sudo apt install -y python3-colcon-common-extensions python3-pip git
+   sudo apt install -y ros-jazzy-control-msgs ros-jazzy-trajectory-msgs ros-jazzy-tf-transformations ros-jazzy-robot-state-publisher ros-jazzy-rviz2 ros-jazzy-pinocchio
+   ```
+
+2. **Install motorbridge** (low-level SDK interface):
+   ```bash
+   python3 -m pip install --user --break-system-packages --index-url https://pypi.org/simple motorbridge
+   ```
+
+3. **Get low-level SDK**:
+   ```bash
+   mkdir -p third_party
+   git clone https://github.com/vectorBH6/reBotArm_control_py.git third_party/reBotArm_control_py
+   ```
+
+4. **Build workspace**:
+   ```bash
+   cd /home/ysn786/ws_odrive_robot
+   source /opt/ros/jazzy/setup.bash
+   colcon build --symlink-install
+   source install/setup.bash
+   ```
+
+5. **Verify installation**:
+   ```bash
+   ros2 pkg executables rebotarmcontroller
+   # Expected: reBotArmController, GravityCompensation, GripperControl, MoveTo, MoveToPose
+   ```
+
+6. **Hardware commissioning** (before running):
+   - Complete reBot Arm basic setup guide
+   - Configure motor IDs
+   - Initialize zero position
+   - Verify serial port: `ls /dev/ttyACM*`
+
+7. **First launch**:
+   ```bash
+   ros2 launch rebotarm_bringup bringup.launch.py channel:=/dev/ttyACM0
+   ```
+1. ✅ Cloned development repo into src/rebotarm_ros2
+   ```bash
+   git clone https://github.com/EclipseaHime017/reBotArmController_ROS2.git rebotarm_ros2
+   ```
+
+2. ✅ Entered repository directory
+   ```bash
+   cd rebotarm_ros2
+   ```
+
+3. ✅ Created custom branch `yaseen-arm-integration`
+   ```bash
+   git checkout -b yaseen-arm-integration
+   ```
+
+4. ✅ Verified branch creation
+   ```bash
+   git branch
+   ```
+
+5. ✅ Added upstream remote pointing to official Seeed repo
+   ```bash
+   git remote add upstream https://github.com/Seeed-Projects/reBotArmController_ROS2.git
+   ```
+
+6. ✅ Verified remotes are configured
+   ```bash
+   git remote -v
+   ```
+   - origin: development repo (fetch/push)
+   - upstream: official Seeed repo (fetch/push)
+
+7. ✅ Fetched upstream history for future updates
+   ```bash
+   git fetch upstream
+   
+### Key APIs (Quick Reference)
+
+**Topics**
+- `/rebotarm/joint_states` - 6-axis joint feedback
+- `/rebotarm/arm_status` - control mode, enabled state, errors
+
+**Services**
+- `/rebotarm/enable`, `/rebotarm/disable` - motor power control
+- `/rebotarm/safe_home` - return to safe position
+- `/rebotarm/move_to_pose_ik` - inverse kinematics
+
+**Actions**
+- `/rebotarm/move_to_pose` - end-effector pose motion
+- `/rebotarm/follow_joint_trajectory` - standard ROS2 trajectory (MoveIt compatible)
+- `/rebotarm/gripper/command` - standard gripper action
+
+### Integration Notes
+
+- Namespace prefix: `/rebotarm` (configurable at launch)
+- CAN communication: USB2CAN bridge on `/dev/ttyACM0`
+- Compatible with MoveIt2 for motion planning
+- RViz visualization ready with URDF/meshes included
+
+**Repository location**: `/home/ysn786/ws_odrive_robot/src/rebotarm_ros2`  
+**Branch**: `yaseen-arm-integration`  
+**Date started**: June 2, 2026
+
