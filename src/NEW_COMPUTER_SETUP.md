@@ -194,7 +194,10 @@ sudo apt install -y \
   ros-humble-joint-state-publisher-gui \
   ros-humble-joy \
   ros-humble-launch-pytest \
+  ros-humble-moveit \
+  ros-humble-moveit-configs-utils \
   ros-humble-nav2-bringup \
+  ros-humble-nav2-map-server \
   ros-humble-navigation2 \
   ros-humble-pinocchio \
   ros-humble-pluginlib \
@@ -209,12 +212,15 @@ sudo apt install -y \
   ros-humble-ros-gz-sim \
   ros-humble-ros2-control \
   ros-humble-ros2-controllers \
+  ros-humble-ros2controlcli \
+  ros-humble-rplidar-ros \
   ros-humble-rqt-image-view \
   ros-humble-rviz2 \
   ros-humble-slam-toolbox \
   ros-humble-teleop-twist-joy \
   ros-humble-teleop-twist-keyboard \
   ros-humble-tf-transformations \
+  ros-humble-tf2-tools \
   ros-humble-trajectory-msgs \
   ros-humble-turtle-nest \
   ros-humble-turtle-tf2-cpp \
@@ -269,8 +275,10 @@ sudo apt install -y \
   ubuntu-restricted-addons \
   ubuntu-standard \
   ubuntu-wallpapers \
+  ufw \
   usbutils \
   uuid-runtime \
+  v4l-utils \
   whois \
   xmlstarlet \
   xxd \
@@ -409,12 +417,261 @@ if [ ! -d "$HOME/ws_odrive_robot/src/rebotarm_ros2/.git" ]; then
   fi
   git clone https://github.com/EclipseaHime017/reBotArmController_ROS2.git "$HOME/ws_odrive_robot/src/rebotarm_ros2"
 fi
+cd "$HOME/ws_odrive_robot/src/rebotarm_ros2"
+git fetch origin
+git switch yaseen-arm-integration 2>/dev/null || git switch -c yaseen-arm-integration
+git remote get-url upstream >/dev/null 2>&1 || git remote add upstream https://github.com/Seeed-Projects/reBotArmController_ROS2.git
+git fetch upstream
+
+if [ ! -d "$HOME/ws_odrive_robot/src/rebotarm_ros2/third_party/reBotArm_control_py/.git" ]; then
+  mkdir -p "$HOME/ws_odrive_robot/src/rebotarm_ros2/third_party"
+  git clone https://github.com/vectorBH6/reBotArm_control_py.git "$HOME/ws_odrive_robot/src/rebotarm_ros2/third_party/reBotArm_control_py"
+fi
+
+echo "=== Robot hardware permissions and udev ==="
+sudo usermod -a -G dialout,video,plugdev "$USER"
+cd "$HOME/ws_odrive_robot/src/rplidar_ros"
+source scripts/create_udev_rules.sh
+
+echo "=== CAN modules ==="
+sudo modprobe can
+sudo modprobe can_raw
+sudo modprobe gs_usb
+printf "can\ncan_raw\ngs_usb\n" | sudo tee /etc/modules-load.d/robot-can.conf >/dev/null
 
 source /opt/ros/humble/setup.bash
+cd "$HOME/ws_odrive_robot"
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 
-echo "=== Done. Restart the terminal or run: source ~/.bashrc ==="
+echo "=== Done. Restart the computer so group membership, udev, and kernel-module changes fully apply. ==="
+```
+
+## Session Log Bring-Up Commands
+
+These are the operational commands from `SESSION_LOG.md` that matter on the
+new computer after the main install has finished.
+
+### Clean Shell Rebuild
+
+Use this if Gazebo, `gz_ros2_control`, or mesh/resource paths act stale after
+switching branches or after the first install:
+
+```bash
+env -i HOME="$HOME" USER="$USER" TERM="$TERM" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" bash --noprofile --norc
+source /opt/ros/humble/setup.bash
+cd ~/ws_odrive_robot
+rm -rf build install log
+colcon build --symlink-install
+source install/local_setup.bash
+```
+
+### CAN Bring-Up For ODrive
+
+The old robot used `can0`. Normal ODrive/CAN setup used 1 Mbps; the debug
+fallback in the log used 250 kbps with a larger transmit queue.
+
+```bash
+sudo modprobe can
+sudo modprobe can_raw
+sudo modprobe gs_usb
+
+sudo ip link set can0 down 2>/dev/null || true
+sudo ip link set can0 type can bitrate 1000000
+sudo ip link set can0 txqueuelen 1000
+sudo ip link set can0 up
+
+ip -details -statistics link show can0
+```
+
+Fallback if CAN crashes when motors start moving:
+
+```bash
+sudo ip link set can0 down
+sudo ip link set can0 up type can bitrate 250000
+sudo ip link set can0 txqueuelen 1000
+ip -details -statistics link show can0
+dmesg | tail -n 20
+```
+
+### RPLidar A2M8
+
+The real robot used RPLidar A2M8 through the `/dev/rplidar` udev rule, 115200
+baud, `Standard` scan mode, and `lidar_link`.
+
+```bash
+sudo usermod -a -G dialout "$USER"
+cd ~/ws_odrive_robot/src/rplidar_ros
+source scripts/create_udev_rules.sh
+
+# Restart or log out/in after this, then verify:
+ls -l /dev/rplidar
+ls -l /dev/serial/by-id/
+```
+
+### RealSense D435
+
+Preferred real-hardware launch from the log:
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  align_depth.enable:=true \
+  rgb_camera.color_profile:=424x240x5 \
+  depth_module.depth_profile:=424x240x5 \
+  enable_sync:=true
+```
+
+Jetson working point-cloud configuration:
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  pointcloud__neon_.enable:=true \
+  decimation_filter.enable:=true \
+  decimation_filter.filter_magnitude:=4 \
+  depth_module.depth_profile:=424x240x15 \
+  rgb_camera.color_profile:=424x240x15
+```
+
+Low-bandwidth Wi-Fi fallback without point cloud:
+
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  align_depth.enable:=true \
+  rgb_camera.color_profile:=424x240x10 \
+  depth_module.depth_profile:=424x240x10
+```
+
+### Gazebo Fortress Daily Setup
+
+For this Ubuntu 22.04 + ROS 2 Humble workspace, the session log recommends
+Fortress as the stable daily setup.
+
+```bash
+sudo apt remove -y 'ros-humble-ros-gzharmonic*'
+sudo apt install -y \
+  ros-humble-ros-gz \
+  ros-humble-ros-gz-sim \
+  ros-humble-ros-gz-bridge \
+  ros-humble-gz-ros2-control \
+  ros-humble-gz-ros2-control-demos
+
+source /opt/ros/humble/setup.bash
+source ~/ws_odrive_robot/install/local_setup.bash
+
+ros2 pkg prefix gz_ros2_control
+env | grep -E 'gz_ros2_control_ws|GZ_VERSION' || true
+```
+
+If only `main` appears after cloning but you need another branch:
+
+```bash
+cd ~/ws_odrive_robot
+git fetch --all
+git branch -a
+git switch <branch-name>
+```
+
+If `rplidar_ros` ever builds with ROS 1 / `catkin` errors, the wrong branch
+was cloned. The workspace should use the ROS 2 / `ament_cmake` version.
+
+### Optional Harmonic Migration
+
+Only use this on an isolated migration branch. Daily development should stay
+on the Fortress setup above.
+
+```bash
+sudo apt remove -y 'ros-humble-ros-gz*' 'ros-humble-ros-ign*'
+sudo apt install -y \
+  ros-humble-ros-gzharmonic \
+  ros-humble-ros-gzharmonic-sim \
+  ros-humble-ros-gzharmonic-bridge \
+  ros-humble-ros-gzharmonic-image \
+  ros-humble-ros-gzharmonic-interfaces
+
+export GZ_VERSION=harmonic
+```
+
+If using a source-built Harmonic `gz_ros2_control`, also include both plugin
+paths:
+
+```bash
+export GZ_SIM_SYSTEM_PLUGIN_PATH="$HOME/gz_ros2_control_ws/install/gz_ros2_control/lib:/opt/ros/humble/lib:${GZ_SIM_SYSTEM_PLUGIN_PATH}"
+```
+
+### Common Development Launches
+
+```bash
+# Gazebo simulation
+ros2 launch yaseen_differential_robot gz_sim.launch.py world:=hospital.sdf use_sim_time:=true
+
+# Keyboard teleop for controller input
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args \
+  -r /cmd_vel:=/yaseen_diffbot_controller/cmd_vel_unstamped
+
+# Real robot bringup with LiDAR
+ros2 launch yaseen_differential_robot control.launch.py use_mock_hardware:=false use_lidar:=true use_rviz:=false
+
+# Joystick real robot
+ros2 launch yaseen_differential_robot joystick.launch.py
+
+# Joystick in Gazebo through twist_mux safety input
+ros2 launch yaseen_differential_robot joystick.launch.py cmd_vel_topic:=/cmd_vel_joy use_stamped:=false use_sim_time:=true
+```
+
+### Nav2 / SLAM Workflow Notes
+
+Do not run multiple localization sources at the same time. In RViz, set
+`2D Pose Estimate` before sending goals.
+
+```bash
+# Save map and posegraph into a timestamped folder
+stamp=$(date +%Y%m%d_%H%M)
+session_dir="$HOME/ws_odrive_robot/maps/${stamp}"
+mkdir -p "$session_dir"
+ros2 run nav2_map_server map_saver_cli -f "$session_dir/map"
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: '$session_dir/posegraph'}"
+```
+
+### Cross-Machine RViz / ROS Networking
+
+The session log captured this as a working PC-side RViz reset path:
+
+```bash
+ros2 daemon stop
+ros2 daemon start
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file:///home/$USER/cyclonedds.xml
+rviz2
+```
+
+Clock and network reminders when Jetson/desktop discovery or TF timing is
+weird:
+
+```bash
+sudo chronyc -a makestep
+sudo ufw disable
+ros2 daemon stop
+ros2 daemon start
+```
+
+### reBot Arm B601-DM
+
+The arm integration uses `/dev/ttyACM0` for the USB2CAN serial bridge.
+
+```bash
+cd ~/ws_odrive_robot/src/rebotarm_ros2
+git switch yaseen-arm-integration
+git remote get-url upstream >/dev/null 2>&1 || git remote add upstream https://github.com/Seeed-Projects/reBotArmController_ROS2.git
+git fetch upstream
+
+cd ~/ws_odrive_robot
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+
+ros2 pkg executables rebotarmcontroller
+ls /dev/ttyACM*
+ros2 launch rebotarm_bringup bringup.launch.py channel:=/dev/ttyACM0
 ```
 
 ## NVIDIA CUDA / Jetson Tooling
